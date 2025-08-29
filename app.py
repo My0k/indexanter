@@ -4,6 +4,7 @@ import csv
 from pdf2image import convert_from_path
 import logging
 from functions.generate_documentos import process_pdf_to_images_and_csv, get_pdf_name_without_extension
+from functions.extraer_datos import process_document_ocr
 
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'  # Necesario para flash messages
@@ -85,8 +86,32 @@ def process_pdf(filename):
 
 @app.route('/extract_data/<doc_name>')
 def extract_data(doc_name):
-    """Extraer datos con OCR (placeholder - no implementado aún)"""
-    # TODO: Implementar extracción de datos
+    """Extraer datos con OCR del documento especificado"""
+    try:
+        print(f"\n🔍 Iniciando extracción de datos para: {doc_name}")
+        
+        # Verificar que el documento existe
+        doc_folder = os.path.join('documentos', doc_name)
+        if not os.path.exists(doc_folder):
+            print(f"❌ Error: El documento {doc_name} no existe")
+            flash(f'Error: El documento {doc_name} no se encuentra', 'error')
+            return redirect(url_for('extract'))
+        
+        # Procesar extracción de datos
+        print(f"🔄 Procesando OCR...")
+        success = process_document_ocr(doc_name)
+        
+        if success:
+            print(f"🎉 Extracción exitosa!")
+            flash(f'Datos extraídos exitosamente de {doc_name}', 'success')
+        else:
+            print(f"💥 Error en la extracción")
+            flash(f'Error al extraer datos de {doc_name}', 'error')
+            
+    except Exception as e:
+        print(f"💥 Error inesperado: {str(e)}")
+        flash(f'Error inesperado: {str(e)}', 'error')
+    
     return redirect(url_for('extract'))
 
 if __name__ == '__main__':

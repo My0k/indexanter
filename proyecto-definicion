@@ -2,9 +2,7 @@ Este proyecto es una plataforma Flask para indexar datos de PDFs
 
 Estructura modular y minimalista:
 /app.py                    # Aplicación Flask principal
-/pdf_processor.py          # Procesamiento de PDFs (genera para cada pdf una carpeta /documentos/(nombrepdf)/imagenes/(acá las imagenes 0001.jpg, 0002.jpg...) y tambien que cree /documentos/(nombrepdf)/(nombrepdf).csv
-/data_extractor.py         # Extracción de datos (obtiene ciertos datos con ocr y los agrega al csv correspondiente)
-/config.py                 # Configuración
+
 
 /templates/
   - documents.html         # Vista de documentos (Donde se ven los pdf de /input)
