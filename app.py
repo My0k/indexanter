@@ -218,10 +218,15 @@ def extract_data(doc_name):
 def serve_image(doc_name, filename):
     """Servir imágenes de los documentos"""
     try:
-        image_dir = os.path.join('documentos', doc_name)
+        image_dir = os.path.abspath(os.path.join('documentos', doc_name))
+        full_path = os.path.join(image_dir, filename)
+        print(f"Intentando servir imagen desde: {full_path}")
+        print(f"¿La ruta existe? {os.path.exists(full_path)}")
         return send_from_directory(image_dir, filename)
     except Exception as e:
         print(f"Error sirviendo imagen: {e}")
+        print(f"doc_name: {doc_name}")
+        print(f"filename: {filename}")
         return "Imagen no encontrada", 404
 
 @app.route('/download_csv/<doc_name>')
