@@ -44,10 +44,88 @@ def ocr_text_from_region(jpg_path: Path, box: tuple[int, int, int, int]) -> str:
         print(f"Error en OCR de región: {e}")
         return ""
 
+def extract_rut_from_text(text: str) -> str:
+    """
+    Extrae el primer RUT del texto con varios formatos posibles:
+    X.XXX.XXX-X, XX.XXX.XXX-X, XXXXXXX-X, XXXXXXXX, XXXXXXXXX, XXXXXXXX-X
+    """
+    if not text:
+        return ""
+    
+    # Patrones para diferentes formatos de RUT
+    patterns = [
+        # Con puntos y guión: X.XXX.XXX-X o XX.XXX.XXX-X
+        r'\b\d{1,2}\.\d{3}\.\d{3}-[\dkK]\b',
+        # Sin puntos con guión: XXXXXXX-X o XXXXXXXX-X
+        r'\b\d{7,8}-[\dkK]\b',
+        # Solo números de 7, 8 o 9 dígitos
+        r'\b\d{7,9}\b'
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(0).upper()
+    
+    return ""
+
+def extract_nombre_from_q1(text: str, rut: str) -> str:
+    """
+    Extrae el nombre desde el inicio del texto hasta antes del RUT
+    """
+    if not text or not rut:
+        return ""
+    
+    # Buscar la posición del RUT en el texto
+    rut_pos = text.upper().find(rut.upper())
+    if rut_pos == -1:
+        # Si no encuentra el RUT exacto, buscar por patrones similares
+        # Quitar puntos y guiones para búsqueda flexible
+        clean_rut = re.sub(r'[.-]', '', rut)
+        for i in range(len(text) - len(clean_rut) + 1):
+            text_segment = re.sub(r'[.-]', '', text[i:i+len(clean_rut)])
+            if text_segment == clean_rut:
+                rut_pos = i
+                break
+    
+    if rut_pos > 0:
+        nombre = text[:rut_pos].strip()
+        # Limpiar el nombre de caracteres extraños al final
+        nombre = re.sub(r'\s+', ' ', nombre).strip()
+        return nombre
+    
+    return ""
+
+def extract_fecha_from_text(text: str) -> str:
+    """
+    Extrae fecha del texto con formatos como DD/MM/YYYY, DD-MM-YYYY, etc.
+    """
+    if not text:
+        return ""
+    
+    # Patrones para diferentes formatos de fecha
+    patterns = [
+        # DD/MM/YYYY
+        r'\b\d{1,2}/\d{1,2}/\d{4}\b',
+        # DD-MM-YYYY
+        r'\b\d{1,2}-\d{1,2}-\d{4}\b',
+        # DD.MM.YYYY
+        r'\b\d{1,2}\.\d{1,2}\.\d{4}\b',
+        # DD MM YYYY (con espacios)
+        r'\b\d{1,2}\s+\d{1,2}\s+\d{4}\b'
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group(0)
+    
+    return ""
+
 def process_document_ocr(doc_name: str) -> bool:
     """
     Procesa un documento para extraer datos con OCR
-    Lee el CSV existente y añade/actualiza columnas: folio, q1, q2
+    Lee el CSV existente y añade/actualiza columnas: folio, q1, q2, rut, fecha, nombre
     Actualiza el CSV después de procesar cada imagen
     """
     try:
@@ -71,12 +149,9 @@ def process_document_ocr(doc_name: str) -> bool:
         
         # Verificar si ya tiene las columnas de OCR y añadirlas si no existen
         new_columns = []
-        if 'folio' not in fieldnames:
-            new_columns.append('folio')
-        if 'q1' not in fieldnames:
-            new_columns.append('q1')
-        if 'q2' not in fieldnames:
-            new_columns.append('q2')
+        for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre']:
+            if col not in fieldnames:
+                new_columns.append(col)
         
         # Actualizar fieldnames
         updated_fieldnames = fieldnames + new_columns
@@ -103,21 +178,36 @@ def process_document_ocr(doc_name: str) -> bool:
                 # Solo extraer q1 y q2 si se encontró folio
                 q1_text = ""
                 q2_text = ""
+                rut = ""
+                fecha = ""
+                nombre = ""
+                
                 if folio:
                     q1_text = ocr_text_from_region(img_path, (0, 0, 515, 190))
                     q2_text = ocr_text_from_region(img_path, (1154, 0, 10**9, 174))
+                    
+                    # Extraer RUT, fecha y nombre
+                    rut = extract_rut_from_text(q1_text)
+                    fecha = extract_fecha_from_text(q2_text)
+                    nombre = extract_nombre_from_q1(q1_text, rut)
                 
                 # Actualizar/sobrescribir valores en el row
                 row['folio'] = folio
                 row['q1'] = q1_text
                 row['q2'] = q2_text
+                row['rut'] = rut
+                row['fecha'] = fecha
+                row['nombre'] = nombre
                 
                 if folio:
-                    print(f"  ✅ Folio encontrado: {folio}")
-                    print(f"  Q1: {q1_text[:50]}{'...' if len(q1_text)>50 else ''}")
-                    print(f"  Q2: {q2_text[:50]}{'...' if len(q2_text)>50 else ''}")
+                    print(f"  ✅ Folio: {folio}")
+                    print(f"  🆔 RUT: {rut}")
+                    print(f"  📅 Fecha: {fecha}")
+                    print(f"  👤 Nombre: {nombre[:50]}{'...' if len(nombre)>50 else ''}")
+                    print(f"  Q1: {q1_text[:30]}{'...' if len(q1_text)>30 else ''}")
+                    print(f"  Q2: {q2_text[:30]}{'...' if len(q2_text)>30 else ''}")
                 else:
-                    print(f"  ❌ Sin folio - Valores vacíos para cuadrantes")
+                    print(f"  ❌ Sin folio - Valores vacíos")
                 
                 # Escribir CSV actualizado después de cada imagen
                 with open(csv_path, 'w', newline='', encoding='utf-8') as f:
@@ -130,9 +220,8 @@ def process_document_ocr(doc_name: str) -> bool:
             else:
                 print(f"Advertencia: Imagen {img_name} no encontrada")
                 # Añadir valores vacíos
-                row['folio'] = ""
-                row['q1'] = ""
-                row['q2'] = ""
+                for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre']:
+                    row[col] = ""
                 
                 # Escribir CSV también para imágenes no encontradas
                 with open(csv_path, 'w', newline='', encoding='utf-8') as f:
