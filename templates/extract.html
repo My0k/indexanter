@@ -1,3 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extraer Datos - Indexador de PDFs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Indexador de PDFs</h1>
+            <nav>
+                <a href="{{ url_for('index') }}" class="nav-btn">Inicio</a>
+                <a href="{{ url_for('documents') }}" class="nav-btn">Documentos</a>
+                <a href="{{ url_for('extract') }}" class="nav-btn active">Extraer Datos</a>
+            </nav>
+        </header>
 
-
-
+        <main>
+            <div class="extract-content">
+                <h2>Extraer Datos con OCR</h2>
+                <p>Selecciona un documento procesado para extraer datos con OCR.</p>
+                
+                <div class="processed-docs">
+                    {% if processed_docs %}
+                        {% for doc in processed_docs %}
+                        <div class="doc-item">
+                            <div class="doc-info">
+                                <h3>{{ doc }}</h3>
+                                <p>Documento procesado - Listo para extracción de datos</p>
+                            </div>
+                            <div class="doc-actions">
+                                <a href="{{ url_for('extract_data', doc_name=doc) }}" class="btn btn-primary">
+                                    Extraer Datos
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-docs">
+                            <p>No hay documentos procesados disponibles</p>
+                            <p>Primero procesa algunos PDFs en la sección <a href="{{ url_for('documents') }}">Documentos</a>.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

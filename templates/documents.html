@@ -3,85 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentos - PDF Indexer</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Documentos - Indexador de PDFs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
-            <span class="navbar-brand"><i class="bi bi-file-earmark-pdf"></i> PDF Indexer</span>
-            <div class="navbar-nav ms-auto d-flex flex-row">
-                <a class="nav-link me-3" href="{{ url_for('documents') }}"><i class="bi bi-folder"></i> Documentos</a>
-                <a class="nav-link me-3" href="{{ url_for('extract') }}"><i class="bi bi-search"></i> Extraer</a>
-                <a class="nav-link me-3" href="{{ url_for('index_view') }}"><i class="bi bi-grid"></i> Indexar</a>
-                <a class="nav-link" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Salir</a>
-            </div>
-        </div>
-    </nav>
+    <div class="container">
+        <header>
+            <h1>Indexador de PDFs</h1>
+            <nav>
+                <a href="{{ url_for('index') }}" class="nav-btn">Inicio</a>
+                <a href="{{ url_for('documents') }}" class="nav-btn active">Documentos</a>
+                <a href="{{ url_for('extract') }}" class="nav-btn">Extraer Datos</a>
+            </nav>
+        </header>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2><i class="bi bi-file-earmark-pdf text-danger"></i> Documentos PDF</h2>
-                    <span class="badge bg-info">{{ pdf_files|length }} archivos</span>
-                </div>
-                <p class="text-muted">Selecciona un PDF para procesar y generar imágenes + CSV</p>
-            </div>
-        </div>
-        
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-info alert-dismissible fade show">
-                        <i class="bi bi-info-circle"></i> {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <main>
+            <!-- Mensajes flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+                {% endif %}
+            {% endwith %}
 
-        {% if pdf_files %}
-            <div class="row">
-                {% for pdf in pdf_files %}
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body d-flex flex-column">
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="bi bi-file-earmark-pdf text-danger fs-1 me-3"></i>
-                                    <div>
-                                        <h5 class="card-title mb-1">{{ pdf }}</h5>
-                                        <small class="text-muted">Archivo PDF</small>
-                                    </div>
-                                </div>
-                                <p class="card-text text-muted flex-grow-1">
-                                    Procesar este PDF generará:
-                                    <br>• Imágenes JPG (una por página)
-                                    <br>• CSV con datos extraídos
-                                    <br>• Detección de comprobantes
-                                </p>
-                                <form method="POST" action="{{ url_for('process_pdf') }}">
-                                    <input type="hidden" name="pdf_file" value="{{ pdf }}">
-                                    <button type="submit" class="btn btn-primary w-100" 
-                                            onclick="this.innerHTML='<i class=\'bi bi-hourglass-split\'></i> Procesando...'; this.disabled=true;">
-                                        <i class="bi bi-gear"></i> Procesar PDF
-                                    </button>
-                                </form>
+            <div class="documents-content">
+                <h2>Documentos PDF</h2>
+                <p>Selecciona un PDF de la carpeta /input para procesarlo y generar imágenes.</p>
+                
+                <div class="pdf-list">
+                    {% if pdf_files %}
+                        {% for pdf in pdf_files %}
+                        <div class="pdf-item">
+                            <div class="pdf-info">
+                                <h3>{{ pdf }}</h3>
+                                <p>Archivo PDF listo para procesar</p>
+                            </div>
+                            <div class="pdf-actions">
+                                <a href="{{ url_for('process_pdf', filename=pdf) }}" class="btn btn-primary">
+                                    Procesar PDF
+                                </a>
                             </div>
                         </div>
-                    </div>
-                {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-files">
+                            <p>No hay archivos PDF en la carpeta /input</p>
+                            <p>Agrega archivos PDF a la carpeta /input para comenzar.</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-        {% else %}
-            <div class="text-center py-5">
-                <i class="bi bi-folder-x text-muted" style="font-size: 4rem;"></i>
-                <h4 class="text-muted mt-3">No hay archivos PDF</h4>
-                <p class="text-muted">Coloca archivos PDF en el directorio <code>input/</code> para procesarlos</p>
-            </div>
-        {% endif %}
+        </main>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
