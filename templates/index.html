@@ -5,6 +5,240 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Indexador de PDFs - Inicio</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Estilos específicos para la indexación responsive */
+        .document-viewer {
+            width: 100%;
+            max-width: none;
+        }
+        
+        .viewer-content {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            min-height: calc(100vh - 200px);
+        }
+        
+        .image-section {
+            flex: 1;
+            min-width: 50%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .data-section {
+            flex: 0 0 400px;
+            min-width: 350px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .image-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 600px;
+        }
+        
+        .document-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            cursor: zoom-in;
+        }
+        
+        .document-image:hover {
+            transform: scale(1.02);
+            transition: transform 0.2s ease;
+        }
+        
+        .image-controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .form-section h4 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 16px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.15s ease-in-out;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        .form-control.readonly {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-actions {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        
+        .document-header h2 {
+            margin: 0;
+            color: #495057;
+        }
+        
+        .page-info {
+            font-weight: 600;
+            color: #495057;
+            background: #e9ecef;
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+        
+        /* Responsive para pantallas pequeñas */
+        @media (max-width: 1024px) {
+            .viewer-content {
+                flex-direction: column;
+            }
+            
+            .data-section {
+                flex: none;
+                max-height: none;
+                overflow-y: visible;
+            }
+            
+            .image-section {
+                min-width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .document-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .image-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .data-section {
+                padding: 15px;
+            }
+        }
+        
+        /* Container principal sin límite de ancho */
+        .container {
+            max-width: none;
+            width: 100%;
+            padding: 0 20px;
+            margin: 0;
+        }
+        
+        /* Flash messages responsive */
+        .flash-messages {
+            margin: 10px 0;
+        }
+        
+        .flash-message {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .flash-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -17,30 +251,129 @@
             </nav>
         </header>
 
+        <!-- Mostrar mensajes flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <main>
-            <div class="index-content">
-                <h2>Visor de Imágenes</h2>
-                <p>Selecciona un documento para ver las imágenes y reparar los datos extraídos.</p>
-                
-                <div class="image-viewer">
-                    <div class="image-placeholder">
-                        <p>No hay imagen seleccionada</p>
+            {% if not current_doc %}
+                <!-- Selector de documentos -->
+                <div class="index-content">
+                    <h2>Visor de Imágenes - Indexación</h2>
+                    <p>Selecciona un documento procesado para revisar y editar los datos extraídos.</p>
+                    
+                    <div class="processed-docs">
+                        {% if processed_docs %}
+                            {% for doc in processed_docs %}
+                            <div class="doc-item">
+                                <div class="doc-info">
+                                    <h3>{{ doc }}</h3>
+                                    <p>Documento procesado - Listo para indexación</p>
+                                </div>
+                                <div class="doc-actions">
+                                    <a href="{{ url_for('view_document', doc_name=doc) }}" class="btn btn-primary">
+                                        Ver Documento
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-docs">
+                                <p>No hay documentos procesados disponibles</p>
+                                <p>Primero procesa algunos PDFs en la sección <a href="{{ url_for('documents') }}">Documentos</a>.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <!-- Visor de documento -->
+                <div class="document-viewer">
+                    <div class="document-header">
+                        <h2>📄 {{ current_doc }}</h2>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">← Volver al inicio</a>
                     </div>
                     
-                    <div class="image-controls">
-                        <button class="btn" disabled>← Anterior</button>
-                        <span class="page-info">Página 1 de 1</span>
-                        <button class="btn" disabled>Siguiente →</button>
-                    </div>
-                </div>
+                    <div class="viewer-content">
+                        <div class="image-section">
+                            <div class="image-container">
+                                {% if img_exists %}
+                                    <img src="{{ url_for('serve_image', doc_name=current_doc, filename=current_data.path_img) }}" 
+                                         alt="Página {{ current_page }}" class="document-image">
+                                {% else %}
+                                    <div class="image-placeholder">
+                                        <p>❌ Imagen no encontrada: {{ current_data.nombre_img }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="image-controls">
+                                {% if current_page > 1 %}
+                                    <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page-1) }}" class="btn">← Anterior</a>
+                                {% else %}
+                                    <button class="btn" disabled>← Anterior</button>
+                                {% endif %}
+                                
+                                <span class="page-info">Página {{ current_page }} de {{ total_pages }}</span>
+                                
+                                {% if current_page < total_pages %}
+                                    <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page+1) }}" class="btn">Siguiente →</a>
+                                {% else %}
+                                    <button class="btn" disabled>Siguiente →</button>
+                                {% endif %}
+                            </div>
+                        </div>
 
-                <div class="data-section">
-                    <h3>Datos Extraídos</h3>
-                    <div class="data-placeholder">
-                        <p>Los datos extraídos aparecerán aquí para su revisión y reparación.</p>
+                        <div class="data-section">
+                            <h3>📊 Datos de la Página</h3>
+                            
+                            <form method="POST" action="{{ url_for('save_data', doc_name=current_doc, page=current_page) }}" class="data-form">
+                                <div class="form-section">
+                                    <h4>🔍 Datos OCR (Solo lectura)</h4>
+                                    <div class="form-group">
+                                        <label>Q1 (Cuadrante 1):</label>
+                                        <textarea readonly class="form-control readonly">{{ current_data.q1 or '' }}</textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Q2 (Cuadrante 2):</label>
+                                        <textarea readonly class="form-control readonly">{{ current_data.q2 or '' }}</textarea>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h4>✏️ Datos Editables</h4>
+                                    <div class="form-group">
+                                        <label for="folio">📋 Folio:</label>
+                                        <input type="text" id="folio" name="folio" value="{{ current_data.folio or '' }}" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="rut">🆔 RUT:</label>
+                                        <input type="text" id="rut" name="rut" value="{{ current_data.rut or '' }}" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="fecha">📅 Fecha:</label>
+                                        <input type="text" id="fecha" name="fecha" value="{{ current_data.fecha or '' }}" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="nombre">👤 Nombre:</label>
+                                        <input type="text" id="nombre" name="nombre" value="{{ current_data.nombre or '' }}" class="form-control">
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">💾 Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
+            {% endif %}
         </main>
     </div>
 </body>
