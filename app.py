@@ -218,11 +218,21 @@ def extract_data(doc_name):
 def serve_image(doc_name, filename):
     """Servir imágenes de los documentos"""
     try:
-        image_dir = os.path.abspath(os.path.join('documentos', doc_name))
-        full_path = os.path.join(image_dir, filename)
-        print(f"Intentando servir imagen desde: {full_path}")
-        print(f"¿La ruta existe? {os.path.exists(full_path)}")
-        return send_from_directory(image_dir, filename)
+        # Normalizar el nombre del archivo reemplazando backslashes por forward slashes
+        filename = filename.replace('\\', '/')
+        # Obtener el directorio base y el nombre del archivo
+        base_dir = os.path.abspath(os.path.join('documentos', doc_name))
+        # Usar os.path.basename para obtener solo el nombre del archivo
+        file_name = os.path.basename(filename)
+        # Obtener el subdirectorio si existe
+        sub_dir = os.path.dirname(filename)
+        # Construir la ruta completa del directorio
+        image_dir = os.path.join(base_dir, sub_dir) if sub_dir else base_dir
+        
+        print(f"Directorio de imagen: {image_dir}")
+        print(f"Nombre de archivo: {file_name}")
+        
+        return send_from_directory(image_dir, file_name)
     except Exception as e:
         print(f"Error sirviendo imagen: {e}")
         print(f"doc_name: {doc_name}")
