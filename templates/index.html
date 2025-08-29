@@ -19,61 +19,133 @@
             min-height: calc(100vh - 200px);
         }
         
-        .image-section {
-            flex: 1;
-            min-width: 50%;
+        .left-panel {
+            flex: 0 0 400px;
+            min-width: 350px;
             display: flex;
             flex-direction: column;
+            gap: 15px;
+        }
+        
+        .image-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         
         .data-section {
-            flex: 0 0 400px;
-            min-width: 350px;
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
             background: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
             border: 1px solid #dee2e6;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+        }
+        
+        .ocr-section {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .image-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .nav-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .small-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            border: 1px solid #dee2e6;
+            background: #fff;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .small-btn:hover:not(:disabled) {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .small-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .zoom-btn {
+            padding: 4px 8px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .zoom-btn:hover {
+            background: #0056b3;
+        }
+        
+        .zoom-info {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 12px;
         }
         
         .image-container {
             flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             background: #f8f9fa;
             border: 1px solid #dee2e6;
             border-radius: 8px;
-            overflow: hidden;
-            min-height: 600px;
+            overflow: auto;
+            min-height: 500px;
+            position: relative;
+            cursor: grab;
+        }
+        
+        .image-container:active {
+            cursor: grabbing;
         }
         
         .document-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            cursor: zoom-in;
-        }
-        
-        .document-image:hover {
-            transform: scale(1.02);
-            transition: transform 0.2s ease;
-        }
-        
-        .image-controls {
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+            transition: transform 0.1s ease;
+            transform-origin: top left;
+            max-width: none;
+            height: auto;
         }
         
         .form-section {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             padding: 15px;
             background: #fff;
             border-radius: 6px;
@@ -88,20 +160,21 @@
             padding-bottom: 5px;
         }
         
-        .form-group {
-            margin-bottom: 15px;
+        .compact-form .form-group {
+            margin-bottom: 12px;
         }
         
-        .form-group label {
+        .compact-form .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             font-weight: 600;
             color: #495057;
+            font-size: 14px;
         }
         
         .form-control {
             width: 100%;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border: 1px solid #ced4da;
             border-radius: 4px;
             font-size: 14px;
@@ -118,20 +191,21 @@
             background-color: #f8f9fa;
             color: #6c757d;
             resize: vertical;
-            min-height: 80px;
+            min-height: 60px;
+            font-size: 12px;
         }
         
         .form-actions {
-            margin-top: 20px;
+            margin-top: 15px;
             text-align: center;
         }
         
         .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
+            background-color: #28a745;
+            border-color: #28a745;
             color: white;
             padding: 10px 20px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             border-radius: 6px;
             border: none;
@@ -140,14 +214,14 @@
         }
         
         .btn-primary:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
         
         .document-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             padding: 15px;
             background: #fff;
             border: 1px solid #dee2e6;
@@ -157,30 +231,79 @@
         .document-header h2 {
             margin: 0;
             color: #495057;
+            font-size: 18px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .btn-download {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out;
+        }
+        
+        .btn-download:hover {
+            background-color: #138496;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            color: white;
+            text-decoration: none;
         }
         
         .page-info {
             font-weight: 600;
             color: #495057;
             background: #e9ecef;
-            padding: 5px 15px;
-            border-radius: 15px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
         }
         
         /* Responsive para pantallas pequeñas */
-        @media (max-width: 1024px) {
+        @media (max-width: 1200px) {
             .viewer-content {
                 flex-direction: column;
             }
             
-            .data-section {
+            .left-panel {
                 flex: none;
-                max-height: none;
-                overflow-y: visible;
+                max-width: none;
+                min-width: auto;
             }
             
-            .image-section {
-                min-width: 100%;
+            .data-section {
+                max-height: none;
+                overflow-y: visible;
             }
         }
         
@@ -191,13 +314,24 @@
                 text-align: center;
             }
             
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-download, .btn-secondary, .btn-pdf {
+                width: 100%;
+                text-align: center;
+            }
+            
             .image-controls {
                 flex-direction: column;
                 gap: 10px;
+                align-items: stretch;
             }
             
-            .data-section {
-                padding: 15px;
+            .nav-controls, .zoom-controls {
+                justify-content: center;
             }
         }
         
@@ -205,7 +339,7 @@
         .container {
             max-width: none;
             width: 100%;
-            padding: 0 20px;
+            padding: 0 15px;
             margin: 0;
         }
         
@@ -237,6 +371,26 @@
             background-color: #fff3cd;
             color: #856404;
             border: 1px solid #ffeaa7;
+        }
+
+        .btn-pdf {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out;
+        }
+        
+        .btn-pdf:hover {
+            background-color: #c82333;
+            color: white;
+            text-decoration: none;
         }
     </style>
 </head>
@@ -297,57 +451,23 @@
                 <div class="document-viewer">
                     <div class="document-header">
                         <h2>📄 {{ current_doc }}</h2>
-                        <a href="{{ url_for('index') }}" class="btn btn-secondary">← Volver al inicio</a>
+                        <div class="header-actions">
+                            <a href="{{ url_for('download_csv', doc_name=current_doc) }}" class="btn btn-download">
+                                📥 Descargar Cuadratura
+                            </a>
+                            <a href="{{ url_for('descargar_documentos', doc_name=current_doc) }}" class="btn btn-pdf">
+                                📄 Descargar PDFs
+                            </a>
+                            <a href="{{ url_for('index') }}" class="btn btn-secondary">← Volver al inicio</a>
+                        </div>
                     </div>
                     
                     <div class="viewer-content">
-                        <div class="image-section">
-                            <div class="image-container">
-                                {% if img_exists %}
-                                    <img src="{{ url_for('serve_image', doc_name=current_doc, filename=current_data.path_img) }}" 
-                                         alt="Página {{ current_page }}" class="document-image">
-                                {% else %}
-                                    <div class="image-placeholder">
-                                        <p>❌ Imagen no encontrada: {{ current_data.nombre_img }}</p>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="image-controls">
-                                {% if current_page > 1 %}
-                                    <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page-1) }}" class="btn">← Anterior</a>
-                                {% else %}
-                                    <button class="btn" disabled>← Anterior</button>
-                                {% endif %}
-                                
-                                <span class="page-info">Página {{ current_page }} de {{ total_pages }}</span>
-                                
-                                {% if current_page < total_pages %}
-                                    <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page+1) }}" class="btn">Siguiente →</a>
-                                {% else %}
-                                    <button class="btn" disabled>Siguiente →</button>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="data-section">
-                            <h3>📊 Datos de la Página</h3>
-                            
-                            <form method="POST" action="{{ url_for('save_data', doc_name=current_doc, page=current_page) }}" class="data-form">
-                                <div class="form-section">
-                                    <h4>🔍 Datos OCR (Solo lectura)</h4>
-                                    <div class="form-group">
-                                        <label>Q1 (Cuadrante 1):</label>
-                                        <textarea readonly class="form-control readonly">{{ current_data.q1 or '' }}</textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Q2 (Cuadrante 2):</label>
-                                        <textarea readonly class="form-control readonly">{{ current_data.q2 or '' }}</textarea>
-                                    </div>
-                                </div>
-
-                                <div class="form-section">
-                                    <h4>✏️ Datos Editables</h4>
+                        <!-- Panel izquierdo: Datos editables y OCR -->
+                        <div class="left-panel">
+                            <div class="data-section">
+                                <h3>✏️ Datos Editables</h3>
+                                <form method="POST" action="{{ url_for('save_data', doc_name=current_doc, page=current_page) }}" class="compact-form">
                                     <div class="form-group">
                                         <label for="folio">📋 Folio:</label>
                                         <input type="text" id="folio" name="folio" value="{{ current_data.folio or '' }}" class="form-control">
@@ -364,17 +484,210 @@
                                         <label for="nombre">👤 Nombre:</label>
                                         <input type="text" id="nombre" name="nombre" value="{{ current_data.nombre or '' }}" class="form-control">
                                     </div>
-                                </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">💾 Guardar Cambios</button>
+                                    </div>
+                                </form>
+                            </div>
 
-                                <div class="form-actions">
-                                    <button type="submit" class="btn btn-primary">💾 Guardar Cambios</button>
+                            <div class="ocr-section">
+                                <h4>🔍 Datos OCR (Solo lectura)</h4>
+                                <div class="form-group">
+                                    <label>Q1 (Cuadrante 1):</label>
+                                    <textarea readonly class="form-control readonly">{{ current_data.q1 or '' }}</textarea>
                                 </div>
-                            </form>
+                                <div class="form-group">
+                                    <label>Q2 (Cuadrante 2):</label>
+                                    <textarea readonly class="form-control readonly">{{ current_data.q2 or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel derecho: Imagen con controles -->
+                        <div class="image-section">
+                            <div class="image-controls">
+                                <div class="nav-controls">
+                                    {% if current_page > 1 %}
+                                        <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page-1) }}" class="small-btn">← Anterior</a>
+                                    {% else %}
+                                        <button class="small-btn" disabled>← Anterior</button>
+                                    {% endif %}
+                                    
+                                    <span class="page-info">{{ current_page }}/{{ total_pages }}</span>
+                                    
+                                    {% if current_page < total_pages %}
+                                        <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page+1) }}" class="small-btn">Siguiente →</a>
+                                    {% else %}
+                                        <button class="small-btn" disabled>Siguiente →</button>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="zoom-controls">
+                                    <button class="zoom-btn" onclick="zoomOut()">−</button>
+                                    <span class="zoom-info" id="zoom-info">100%</span>
+                                    <button class="zoom-btn" onclick="zoomIn()">+</button>
+                                    <button class="zoom-btn" onclick="resetZoom()">↻</button>
+                                    <button class="zoom-btn" onclick="fitToWidth()">📐</button>
+                                </div>
+                            </div>
+                            
+                            <div class="image-container" id="image-container">
+                                {% if img_exists %}
+                                    <img src="{{ url_for('serve_image', doc_name=current_doc, filename=current_data.path_img) }}" 
+                                         alt="Página {{ current_page }}" class="document-image" id="document-image">
+                                {% else %}
+                                    <div class="image-placeholder">
+                                        <p>❌ Imagen no encontrada: {{ current_data.nombre_img }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
             {% endif %}
         </main>
     </div>
+
+    <script>
+        let currentZoom = 1;
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+
+        const img = document.getElementById('document-image');
+        const container = document.getElementById('image-container');
+        const zoomInfo = document.getElementById('zoom-info');
+
+        if (img && container) {
+            // Funciones de zoom
+            function updateZoom() {
+                img.style.transform = `scale(${currentZoom})`;
+                img.style.transformOrigin = 'top left';
+                zoomInfo.textContent = Math.round(currentZoom * 100) + '%';
+            }
+
+            function zoomIn() {
+                currentZoom = Math.min(currentZoom * 1.3, 5);
+                updateZoom();
+            }
+
+            function zoomOut() {
+                currentZoom = Math.max(currentZoom / 1.3, 0.2);
+                updateZoom();
+            }
+
+            function resetZoom() {
+                currentZoom = 1;
+                updateZoom();
+                container.scrollLeft = 0;
+                container.scrollTop = 0;
+            }
+
+            function fitToWidth() {
+                const containerWidth = container.clientWidth - 40;
+                const imgWidth = img.naturalWidth;
+                if (imgWidth > 0) {
+                    currentZoom = containerWidth / imgWidth;
+                    updateZoom();
+                    container.scrollLeft = 0;
+                    container.scrollTop = 0;
+                }
+            }
+
+            // Zoom con rueda del mouse
+            container.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            });
+
+            // Arrastrar imagen
+            container.addEventListener('mousedown', function(e) {
+                if (e.target === img) {
+                    isDragging = true;
+                    startX = e.pageX - container.offsetLeft;
+                    startY = e.pageY - container.offsetTop;
+                    scrollLeft = container.scrollLeft;
+                    scrollTop = container.scrollTop;
+                    container.style.cursor = 'grabbing';
+                }
+            });
+
+            document.addEventListener('mouseleave', function() {
+                isDragging = false;
+                container.style.cursor = 'grab';
+            });
+
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+                container.style.cursor = 'grab';
+            });
+
+            container.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                const x = e.pageX - container.offsetLeft;
+                const y = e.pageY - container.offsetTop;
+                const walkX = (x - startX) * 1.5;
+                const walkY = (y - startY) * 1.5;
+                container.scrollLeft = scrollLeft - walkX;
+                container.scrollTop = scrollTop - walkY;
+            });
+
+            // Ajustar al ancho inicialmente
+            img.onload = function() {
+                setTimeout(fitToWidth, 100);
+            };
+
+            // Si la imagen ya está cargada
+            if (img.complete) {
+                setTimeout(fitToWidth, 100);
+            }
+        }
+
+        // Hacer las funciones globales para los botones
+        window.zoomIn = zoomIn;
+        window.zoomOut = zoomOut;
+        window.resetZoom = resetZoom;
+        window.fitToWidth = fitToWidth;
+
+        // Atajos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea') {
+                return; // No interferir cuando se está escribiendo
+            }
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    document.querySelector('a[href*="page=' + ({{ current_page }} - 1) + '"]')?.click();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    document.querySelector('a[href*="page=' + ({{ current_page }} + 1) + '"]')?.click();
+                    break;
+                case '+':
+                case '=':
+                    e.preventDefault();
+                    zoomIn();
+                    break;
+                case '-':
+                    e.preventDefault();
+                    zoomOut();
+                    break;
+                case '0':
+                    e.preventDefault();
+                    resetZoom();
+                    break;
+                case 'f':
+                case 'F':
+                    e.preventDefault();
+                    fitToWidth();
+                    break;
+            }
+        });
+    </script>
 </body>
 </html>

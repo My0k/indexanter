@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descargar PDFs - {{ doc_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .download-header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        
+        .download-header h2 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .folio-analysis {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        
+        .folio-group {
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .folio-info h4 {
+            margin: 0 0 5px 0;
+            color: #495057;
+        }
+        
+        .folio-info p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .separate-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn-separate {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out;
+            display: inline-block;
+        }
+        
+        .btn-separate:hover {
+            background-color: #218838;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .pdfs-generated {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        
+        .pdf-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .pdf-info h4 {
+            margin: 0 0 5px 0;
+            color: #495057;
+        }
+        
+        .pdf-info p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .pdf-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-download-pdf {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out;
+        }
+        
+        .btn-download-pdf:hover {
+            background-color: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-download-all {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out;
+            display: inline-block;
+            margin: 20px 10px;
+        }
+        
+        .btn-download-all:hover {
+            background-color: #138496;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-back {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out;
+        }
+        
+        .btn-back:hover {
+            background-color: #5a6268;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        
+        .stat-item {
+            background: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        
+        .flash-messages {
+            margin: 10px 0;
+        }
+        
+        .flash-message {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .folio-group, .pdf-item {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .pdf-actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Indexador de PDFs</h1>
+            <nav>
+                <a href="{{ url_for('index') }}" class="nav-btn">Inicio</a>
+                <a href="{{ url_for('documents') }}" class="nav-btn">Documentos</a>
+                <a href="{{ url_for('extract') }}" class="nav-btn">Extraer Datos</a>
+            </nav>
+        </header>
+
+        <!-- Mostrar mensajes flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <main>
+            <div class="download-header">
+                <h2>📄 Descargar PDFs - {{ doc_name }}</h2>
+                <p>Genera PDFs separados por folio para facilitar la gestión de documentos.</p>
+                <a href="{{ url_for('view_document', doc_name=doc_name) }}" class="btn-back">← Volver al documento</a>
+            </div>
+
+            {% if folio_groups %}
+                <div class="folio-analysis">
+                    <h3>📊 Análisis de Folios</h3>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number">{{ total_pdfs }}</div>
+                            <div class="stat-label">PDFs a generar</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">{{ folio_groups | map(attribute='pages') | map('length') | sum }}</div>
+                            <div class="stat-label">Total páginas</div>
+                        </div>
+                    </div>
+                    
+                    <h4>Estructura de documentos:</h4>
+                    {% for group in folio_groups %}
+                    <div class="folio-group">
+                        <div class="folio-info">
+                            <h4>📋 Folio: {{ group.folio }}</h4>
+                            <p>Páginas {{ group.pages | first }} - {{ group.pages | last }} ({{ group.pages | length }} páginas)</p>
+                        </div>
+                        <div class="folio-pages">
+                            <strong>{{ group.pages | length }}</strong> páginas
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if not pdfs_generados %}
+                    <div class="separate-section">
+                        <h3>🔧 Separar Documentos</h3>
+                        <p>Se generarán <strong>{{ total_pdfs }} PDFs</strong> separados por folio.</p>
+                        <a href="{{ url_for('separar_pdfs', doc_name=doc_name) }}" class="btn-separate">
+                            🔀 Separar PDF ({{ total_pdfs }} documentos)
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="pdfs-generated">
+                        <h3>📁 PDFs Generados</h3>
+                        <p>Los siguientes PDFs han sido generados y están listos para descargar:</p>
+                        
+                        {% for pdf in pdfs_generados %}
+                        <div class="pdf-item">
+                            <div class="pdf-info">
+                                <h4>📄 {{ pdf.name }}</h4>
+                                <p>Folio: {{ pdf.folio }} | {{ pdf.pages }} páginas | {{ pdf.size_mb }} MB</p>
+                            </div>
+                            <div class="pdf-actions">
+                                <a href="{{ url_for('download_pdf', doc_name=doc_name, pdf_name=pdf.name) }}" class="btn-download-pdf">
+                                    💾 Descargar
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="separate-section">
+                            <a href="{{ url_for('download_all_pdfs', doc_name=doc_name) }}" class="btn-download-all">
+                                📦 Descargar Todos (ZIP)
+                            </a>
+                            <a href="{{ url_for('separar_pdfs', doc_name=doc_name) }}" class="btn-separate">
+                                🔄 Regenerar PDFs
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="folio-analysis">
+                    <h3>⚠️ Sin Folios Detectados</h3>
+                    <p>No se encontraron folios en este documento. Asegúrate de que el proceso de extracción OCR haya identificado folios válidos.</p>
+                    <a href="{{ url_for('extract') }}" class="btn-separate">🔍 Ir a Extraer Datos</a>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</body>
+</html>
