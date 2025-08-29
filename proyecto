@@ -1,0 +1,33 @@
+Este proyecto es una plataforma Flask para indexar datos de PDFs
+
+Estructura modular y minimalista:
+/app.py                    # Aplicación Flask principal
+/auth.py                   # Autenticación simple
+/pdf_processor.py          # Procesamiento de PDFs
+/data_extractor.py         # Extracción de datos
+/config.py                 # Configuración
+
+/templates/
+  - login.html             # Login
+  - documents.html         # Vista de documentos (Donde se ven los pdf de /input)
+  - extract.html           # Extracción de datos  (para obtener datos con ocr)
+  - index.html            # Indexación
+
+/static/
+  - style.css             # Estilos CSS
+  - app.js               # JavaScript
+
+/input/                   # PDFs de entrada
+/documentos/             # Datos procesados
+  /(documento)/
+    - (documento).csv     # Datos extraídos
+    - /imagenes/         # Imágenes: 0001.jpg, 0002.jpg...
+
+Flujo:
+Login (user: chepss, pass: chepss123, que no se muestre en el front)
+
+en documents.html para seleccionar un pdf de input, para generar un csv e imagenes, de acuerdo a un pdf debe separar cada hoja en un jpg distinto con nombre 0001.jpg (por orden) y un csv donde salgan los headers:
+numero,nombre_jpg... (documento).csv
+
+en extract.html, que salgan los documentos que tienen carpeta documents, y permita extraer los datos
+en index.html, un visor imagen por imagen (siguiente, anterior) y donde salgan los datos extraidos para reparar

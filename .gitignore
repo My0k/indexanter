@@ -1,0 +1,12 @@
+# Ignorar todos los PDF (mayúsculas y minúsculas)
+*.pdf
+*.PDF
+
+# Ignorar todos los JPG/JPEG (mayúsculas y minúsculas)
+*.jpg
+*.JPG
+*.jpeg
+*.JPEG
+
+# Ignorar entorno virtual de Python
+venv/
