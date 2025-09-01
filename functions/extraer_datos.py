@@ -122,10 +122,75 @@ def extract_fecha_from_text(text: str) -> str:
     
     return ""
 
+def extract_estado_from_text(text: str) -> str:
+    """
+    Extrae estado del texto Q2 y devuelve el código numérico como string
+    """
+    if not text:
+        return ""  # Vacío por defecto
+    
+    text_normalized = text.upper()
+    
+    if "VIGENTE" in text_normalized:
+        return "1"
+    elif "PENDIENTE" in text_normalized:
+        return "2"
+    elif "ACTUALIZADO" in text_normalized:
+        return "3"
+    elif "NULO" in text_normalized:
+        return "4"
+    
+    return ""  # Vacío si no se encuentra ningún estado
+
+def extract_tipo_documento_from_text(text: str) -> str:
+    """
+    Extrae tipo de documento del texto completo buscando la primera palabra clave encontrada
+    Devuelve: "1" para egreso, "2" para traspaso, "3" para ingreso, "" si no encuentra nada
+    """
+    if not text:
+        print("  🔍 Tipo Doc: Texto vacío - No se puede detectar tipo")
+        return ""  # Vacío por defecto
+    
+    text_normalized = text.upper()
+    print(f"  🔍 Tipo Doc: Analizando texto (primeros 100 chars): {text_normalized[:100]}...")
+    
+    # Buscar palabras clave en orden de aparición en el texto
+    palabras_clave = [
+        ("EGRESO", "1"),   # egreso = 1
+        ("TRASPASO", "2"), # traspaso = 2  
+        ("INGRESO", "3")   # ingreso = 3
+    ]
+    
+    # Encontrar la primera palabra que aparece en el texto
+    primera_posicion = len(text_normalized)
+    tipo_encontrado = ""
+    palabra_encontrada = ""
+    
+    print("  🔍 Tipo Doc: Buscando palabras clave...")
+    
+    for palabra, codigo in palabras_clave:
+        posicion = text_normalized.find(palabra)
+        if posicion != -1:
+            print(f"  ✅ Tipo Doc: Encontrada '{palabra}' en posición {posicion}")
+            if posicion < primera_posicion:
+                primera_posicion = posicion
+                tipo_encontrado = codigo
+                palabra_encontrada = palabra
+                print(f"  🎯 Tipo Doc: '{palabra}' es la primera palabra encontrada (posición {posicion})")
+        else:
+            print(f"  ❌ Tipo Doc: No se encontró '{palabra}'")
+    
+    if tipo_encontrado:
+        print(f"  ✅ Tipo Doc: RESULTADO FINAL -> '{palabra_encontrada}' = código '{tipo_encontrado}'")
+    else:
+        print("  ❌ Tipo Doc: RESULTADO FINAL -> No se encontró ningún tipo de documento")
+    
+    return tipo_encontrado  # Devuelve "1", "2", "3" o ""
+
 def process_document_ocr(doc_name: str) -> bool:
     """
     Procesa un documento para extraer datos con OCR
-    Lee el CSV existente y añade/actualiza columnas: folio, q1, q2, rut, fecha, nombre
+    Lee el CSV existente y añade/actualiza columnas: folio, q1, q2, rut, fecha, nombre, estado, tipo_documento, nota
     Actualiza el CSV después de procesar cada imagen
     """
     try:
@@ -149,7 +214,7 @@ def process_document_ocr(doc_name: str) -> bool:
         
         # Verificar si ya tiene las columnas de OCR y añadirlas si no existen
         new_columns = []
-        for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre', 'ocultar']:
+        for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre', 'estado', 'tipo_documento', 'nota', 'ocultar']:
             if col not in fieldnames:
                 new_columns.append(col)
         
@@ -162,18 +227,33 @@ def process_document_ocr(doc_name: str) -> bool:
             img_path = images_folder / img_name
             
             if img_path.exists():
-                print(f"Procesando {img_name} ({i+1}/{len(rows)})...")
+                print(f"\n🔄 Procesando {img_name} ({i+1}/{len(rows)})...")
                 
                 # OCR página completa
                 try:
                     ocr_page_text = pytesseract.image_to_string(Image.open(img_path), lang="spa+eng")
+                    print(f"  📖 OCR completo obtenido: {len(ocr_page_text)} caracteres")
+                    if ocr_page_text:
+                        print(f"  📖 OCR inicio: {ocr_page_text[:200]}...")
+                    else:
+                        print("  ⚠️  OCR devolvió texto vacío")
                 except Exception as e:
-                    print(f"Error de OCR en {img_name}: {e}")
+                    print(f"  ❌ Error de OCR en {img_name}: {e}")
                     ocr_page_text = ""
                 
                 # Extraer folio si contiene comprobante
                 has_comp = contains_comprobante(ocr_page_text)
                 folio = extract_first_folio_token(ocr_page_text) if has_comp else ""
+                print(f"  📋 Contiene comprobante: {'SÍ' if has_comp else 'NO'}")
+                if folio:
+                    print(f"  📋 Folio detectado: {folio}")
+                else:
+                    print("  📋 No se detectó folio")
+                
+                # Extraer tipo de documento desde el OCR completo
+                print(f"\n  🔍 === ANÁLISIS TIPO DE DOCUMENTO ===")
+                tipo_documento = extract_tipo_documento_from_text(ocr_page_text)
+                print(f"  🔍 === FIN ANÁLISIS TIPO DE DOCUMENTO ===\n")
                 
                 # Solo extraer q1 y q2 si se encontró folio
                 q1_text = ""
@@ -181,8 +261,10 @@ def process_document_ocr(doc_name: str) -> bool:
                 rut = ""
                 fecha = ""
                 nombre = ""
+                estado = ""  # Default vacío
                 
                 if folio:
+                    print(f"  🔍 Extrayendo Q1 y Q2 porque se encontró folio...")
                     q1_text = ocr_text_from_region(img_path, (0, 0, 515, 190))
                     q2_text = ocr_text_from_region(img_path, (1154, 0, 10**9, 174))
                     
@@ -190,6 +272,19 @@ def process_document_ocr(doc_name: str) -> bool:
                     rut = extract_rut_from_text(q1_text)
                     fecha = extract_fecha_from_text(q2_text)
                     nombre = extract_nombre_from_q1(q1_text, rut)
+                    
+                    # Extraer estado del Q2
+                    estado = extract_estado_from_text(q2_text)
+                    
+                    print(f"  🔍 Datos extraídos de cuadrantes:")
+                    print(f"    Q1 longitud: {len(q1_text)} chars")
+                    print(f"    Q2 longitud: {len(q2_text)} chars")
+                else:
+                    print(f"  ⚠️  No se extraen Q1/Q2 porque no hay folio")
+                
+                # Mostrar valor anterior vs nuevo para tipo_documento
+                valor_anterior = row.get('tipo_documento', '')
+                print(f"  📊 Tipo documento - Anterior: '{valor_anterior}' | Detectado: '{tipo_documento}'")
                 
                 # Actualizar/sobrescribir valores en el row
                 row['folio'] = folio
@@ -198,17 +293,25 @@ def process_document_ocr(doc_name: str) -> bool:
                 row['rut'] = rut
                 row['fecha'] = fecha
                 row['nombre'] = nombre
+                row['estado'] = row.get('estado', estado)  # Mantener valor existente o usar el extraído
+                row['tipo_documento'] = tipo_documento  # Siempre usar el valor detectado
+                row['nota'] = row.get('nota', '')  # Mantener nota existente o vacío
                 row['ocultar'] = row.get('ocultar', 'NO')  # Mantener valor existente o NO por defecto
                 
+                # Mostrar resumen final
+                print(f"  📊 === RESUMEN FINAL ===")
                 if folio:
                     print(f"  ✅ Folio: {folio}")
                     print(f"  🆔 RUT: {rut}")
                     print(f"  📅 Fecha: {fecha}")
                     print(f"  👤 Nombre: {nombre[:50]}{'...' if len(nombre)>50 else ''}")
+                    print(f"  📊 Estado: {estado}")
+                print(f"  📄 Tipo Doc FINAL: '{row['tipo_documento']}'")
+                if q1_text:
                     print(f"  Q1: {q1_text[:30]}{'...' if len(q1_text)>30 else ''}")
+                if q2_text:
                     print(f"  Q2: {q2_text[:30]}{'...' if len(q2_text)>30 else ''}")
-                else:
-                    print(f"  ❌ Sin folio - Valores vacíos")
+                print(f"  📊 === FIN RESUMEN ===")
                 
                 # Escribir CSV actualizado después de cada imagen
                 with open(csv_path, 'w', newline='', encoding='utf-8') as f:
@@ -219,9 +322,9 @@ def process_document_ocr(doc_name: str) -> bool:
                 print(f"  💾 CSV actualizado")
                 
             else:
-                print(f"Advertencia: Imagen {img_name} no encontrada")
+                print(f"⚠️  Advertencia: Imagen {img_name} no encontrada")
                 # Añadir valores vacíos
-                for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre']:
+                for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre', 'estado', 'tipo_documento', 'nota']:
                     row[col] = ""
                 row['ocultar'] = row.get('ocultar', 'NO')  # Mantener valor existente
                 
@@ -231,7 +334,7 @@ def process_document_ocr(doc_name: str) -> bool:
                     writer.writeheader()
                     writer.writerows(rows)
         
-        print(f"✅ Extracción completada para {doc_name}")
+        print(f"\n🎉 ✅ Extracción completada para {doc_name}")
         print(f"📄 CSV final: {csv_path}")
         return True
         

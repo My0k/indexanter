@@ -513,6 +513,36 @@
                                         <label for="nombre">👤 Nombre:</label>
                                         <input type="text" id="nombre" name="nombre" value="{{ current_data.nombre or '' }}" class="form-control">
                                     </div>
+                                    
+                                    <!-- Campo Estado -->
+                                    <div class="form-group">
+                                        <label for="estado">📊 Estado:</label>
+                                        <select id="estado" name="estado" class="form-control">
+                                            <option value="" {{ 'selected' if not current_data.estado or current_data.estado == '' else '' }}>-- Seleccionar Estado --</option>
+                                            <option value="1" {{ 'selected' if current_data.estado == '1' else '' }}>VIGENTE</option>
+                                            <option value="2" {{ 'selected' if current_data.estado == '2' else '' }}>PENDIENTE</option>
+                                            <option value="3" {{ 'selected' if current_data.estado == '3' else '' }}>ACTUALIZADO</option>
+                                            <option value="4" {{ 'selected' if current_data.estado == '4' else '' }}>NULO</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Campo Tipo Documento con mejor lógica de selección -->
+                                    <div class="form-group">
+                                        <label for="tipo_documento">📄 Tipo Documento:</label>
+                                        <select id="tipo_documento" name="tipo_documento" class="form-control">
+                                            <option value="" {% if not current_data.tipo_documento or current_data.tipo_documento == '' %}selected{% endif %}>-- Seleccionar Tipo --</option>
+                                            <option value="1" {% if current_data.tipo_documento == '1' %}selected{% endif %}>egreso</option>
+                                            <option value="2" {% if current_data.tipo_documento == '2' %}selected{% endif %}>traspaso</option>
+                                            <option value="3" {% if current_data.tipo_documento == '3' %}selected{% endif %}>ingreso</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- NUEVO Campo Nota -->
+                                    <div class="form-group">
+                                        <label for="nota">📝 Nota:</label>
+                                        <textarea id="nota" name="nota" class="form-control" rows="3" placeholder="Agregar nota opcional...">{{ current_data.nota or '' }}</textarea>
+                                    </div>
+                                    
                                     <div class="form-group">
                                         <label for="ocultar">👁️ Ocultar hoja:</label>
                                         <div class="toggle-container">

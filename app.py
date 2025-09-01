@@ -107,13 +107,18 @@ def save_data(doc_name, page):
             fieldnames = list(reader.fieldnames)
             rows = list(reader)
 
-        # Verificar si existe la columna 'ocultar' y añadirla si no existe
-        if 'ocultar' not in fieldnames:
-            fieldnames.append('ocultar')
-            # Añadir valor por defecto a todas las filas existentes
-            for row in rows:
-                if 'ocultar' not in row:
-                    row['ocultar'] = 'NO'
+        # Verificar si existen las nuevas columnas y añadirlas si no existen
+        new_columns = ['ocultar', 'estado', 'tipo_documento', 'nota']
+        for col in new_columns:
+            if col not in fieldnames:
+                fieldnames.append(col)
+                # Añadir valor por defecto a todas las filas existentes
+                for row in rows:
+                    if col not in row:
+                        if col == 'ocultar':
+                            row[col] = 'NO'
+                        elif col in ['estado', 'tipo_documento', 'nota']:
+                            row[col] = ''  # Vacío por defecto
 
         if page < 1 or page > len(rows):
             flash('Página inválida', 'error')
@@ -126,6 +131,9 @@ def save_data(doc_name, page):
         rows[row_index]['fecha'] = request.form.get('fecha', '').strip()
         rows[row_index]['nombre'] = request.form.get('nombre', '').strip()
         rows[row_index]['ocultar'] = request.form.get('ocultar', 'NO').strip()
+        rows[row_index]['estado'] = request.form.get('estado', '').strip()
+        rows[row_index]['tipo_documento'] = request.form.get('tipo_documento', '').strip()
+        rows[row_index]['nota'] = request.form.get('nota', '').strip()  # NUEVO CAMPO
         
         # Guardar CSV actualizado
         with open(csv_path, 'w', newline='', encoding='utf-8') as f:
