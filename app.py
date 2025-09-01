@@ -1,20 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, send_file
 import os
 import csv
+from datetime import datetime
 from pdf2image import convert_from_path
 import logging
 from functions.generate_documentos import process_pdf_to_images_and_csv, get_pdf_name_without_extension
 from functions.extraer_datos import process_document_ocr
 import zipfile
 from io import BytesIO
-try:
-    import pymupdf as fitz  # Importación moderna de PyMuPDF
-except ImportError:
-    try:
-        import fitz  # Fallback a la importación tradicional
-    except ImportError:
-        print("❌ PyMuPDF no está instalado")
-        fitz = None
+import shutil
+from functions.separador_pdf import separar_pdfs_por_estructura
 
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'  # Necesario para flash messages
@@ -463,6 +458,26 @@ def separar_pdfs(doc_name):
     
     return redirect(url_for('descargar_documentos', doc_name=doc_name))
 
+@app.route('/separar_pdfs_estructura/<doc_name>')
+def separar_pdfs_estructura(doc_name):
+    """Generar PDFs con estructura de carpetas por año/mes/tipo"""
+    try:
+        resultado = separar_pdfs_por_estructura(doc_name)
+        
+        if resultado['success']:
+            flash(f'PDFs organizados exitosamente: {resultado["pdfs_creados"]} archivos creados', 'success')
+            if resultado['pdfs_sin_fecha'] > 0:
+                flash(f'Advertencia: {resultado["pdfs_sin_fecha"]} PDFs sin fecha válida', 'warning')
+            if resultado['pdfs_sin_tipo'] > 0:
+                flash(f'Advertencia: {resultado["pdfs_sin_tipo"]} PDFs sin tipo válido', 'warning')
+        else:
+            flash(f'Error al organizar PDFs: {resultado["error"]}', 'error')
+            
+    except Exception as e:
+        flash(f'Error inesperado: {str(e)}', 'error')
+    
+    return redirect(url_for('descargar_documentos', doc_name=doc_name))
+
 @app.route('/download_pdf/<doc_name>/<pdf_name>')
 def download_pdf(doc_name, pdf_name):
     """Descargar PDF individual"""
@@ -487,33 +502,71 @@ def download_pdf(doc_name, pdf_name):
 
 @app.route('/download_all_pdfs/<doc_name>')
 def download_all_pdfs(doc_name):
-    """Descargar todos los PDFs en un ZIP"""
+    """Descargar todos los PDFs en un ZIP con estructura de carpetas"""
     try:
-        pdfs_folder = os.path.join('documentos', doc_name, 'pdfs_separados')
+        # Primero generar la estructura organizada
+        print(f"🔄 Generando estructura organizada para {doc_name}")
+        resultado = separar_pdfs_por_estructura(doc_name, carpeta_salida="temp_zip")
         
-        if not os.path.exists(pdfs_folder):
-            flash('No hay PDFs generados para descargar', 'error')
+        if not resultado['success']:
+            flash(f'Error al organizar PDFs: {resultado["error"]}', 'error')
             return redirect(url_for('descargar_documentos', doc_name=doc_name))
         
-        # Crear ZIP en memoria
+        # Verificar que se crearon PDFs
+        if resultado['pdfs_creados'] == 0:
+            flash('No hay PDFs para descargar', 'warning')
+            return redirect(url_for('descargar_documentos', doc_name=doc_name))
+        
+        # Crear ZIP en memoria con estructura de carpetas
         memory_file = BytesIO()
+        carpeta_estructurada = os.path.join("temp_zip", doc_name)
+        
+        if not os.path.exists(carpeta_estructurada):
+            flash('Error: No se pudo crear la estructura de carpetas', 'error')
+            return redirect(url_for('descargar_documentos', doc_name=doc_name))
+        
+        print(f"📦 Creando ZIP con estructura desde: {carpeta_estructurada}")
         
         with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-            for filename in os.listdir(pdfs_folder):
-                if filename.endswith('.pdf'):
-                    file_path = os.path.join(pdfs_folder, filename)
-                    zf.write(file_path, filename)
+            # Recorrer toda la estructura de carpetas
+            for root, dirs, files in os.walk(carpeta_estructurada):
+                for file in files:
+                    if file.endswith('.pdf'):
+                        # Ruta completa del archivo
+                        file_path = os.path.join(root, file)
+                        
+                        # Ruta relativa dentro del ZIP (sin "temp_zip/")
+                        # Ejemplo: "ARCHIVADOR_00000001/2019/12/egreso/19120264.pdf"
+                        relative_path = os.path.relpath(file_path, "temp_zip")
+                        
+                        # Añadir al ZIP manteniendo la estructura
+                        zf.write(file_path, relative_path)
+                        print(f"  ✅ Añadido al ZIP: {relative_path}")
+        
+        # Limpiar carpeta temporal
+        try:
+            import shutil
+            shutil.rmtree("temp_zip")
+            print("🧹 Carpeta temporal eliminada")
+        except Exception as e:
+            print(f"⚠️  No se pudo eliminar carpeta temporal: {e}")
         
         memory_file.seek(0)
+        
+        # Nombre del ZIP con información adicional
+        zip_filename = f"{doc_name}_estructurado_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        
+        print(f"📥 Enviando ZIP: {zip_filename} ({resultado['pdfs_creados']} PDFs)")
         
         return send_file(
             memory_file,
             as_attachment=True,
-            download_name=f"{doc_name}_pdfs_separados.zip",
+            download_name=zip_filename,
             mimetype='application/zip'
         )
         
     except Exception as e:
+        print(f"❌ Error al crear ZIP estructurado: {str(e)}")
         flash(f'Error al crear ZIP: {str(e)}', 'error')
         return redirect(url_for('descargar_documentos', doc_name=doc_name))
 

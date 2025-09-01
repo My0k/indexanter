@@ -331,10 +331,13 @@
                         
                         <div class="separate-section">
                             <a href="{{ url_for('download_all_pdfs', doc_name=doc_name) }}" class="btn-download-all">
-                                📦 Descargar Todos (ZIP)
+                                📦 Descargar ZIP Estructurado
                             </a>
                             <a href="{{ url_for('separar_pdfs', doc_name=doc_name) }}" class="btn-separate">
                                 🔄 Regenerar PDFs
+                            </a>
+                            <a href="{{ url_for('separar_pdfs_estructura', doc_name=doc_name) }}" class="btn btn-primary" style="background-color: #28a745; margin: 10px;">
+                                📁 Organizar por Fecha/Tipo
                             </a>
                         </div>
                     </div>

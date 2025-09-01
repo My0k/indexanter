@@ -48,11 +48,21 @@ def extract_rut_from_text(text: str) -> str:
     """
     Extrae el primer RUT del texto con varios formatos posibles:
     X.XXX.XXX-X, XX.XXX.XXX-X, XXXXXXX-X, XXXXXXXX, XXXXXXXXX, XXXXXXXX-X
+    Maneja errores de OCR donde . se lee como , o :
     """
     if not text:
         return ""
     
-    # Patrones para diferentes formatos de RUT
+    # Mostrar si hay caracteres problemáticos
+    tiene_comas = ',' in text
+    tiene_dos_puntos = ':' in text
+    if tiene_comas or tiene_dos_puntos:
+        print(f"  🔍 RUT: Detectados caracteres problemáticos - Comas: {tiene_comas}, Dos puntos: {tiene_dos_puntos}")
+    
+    # Normalizar texto: reemplazar , y : por . para estandarizar
+    text_normalizado = text.replace(',', '.').replace(':', '.')
+    
+    # Patrones para diferentes formatos de RUT (ahora con texto normalizado)
     patterns = [
         # Con puntos y guión: X.XXX.XXX-X o XX.XXX.XXX-X
         r'\b\d{1,2}\.\d{3}\.\d{3}-[\dkK]\b',
@@ -62,11 +72,35 @@ def extract_rut_from_text(text: str) -> str:
         r'\b\d{7,9}\b'
     ]
     
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(0).upper()
+    print(f"  🔍 RUT: Buscando en texto de {len(text)} caracteres...")
+    if tiene_comas or tiene_dos_puntos:
+        print(f"  🔄 RUT: Aplicando normalización de caracteres...")
     
+    for i, pattern in enumerate(patterns):
+        match = re.search(pattern, text_normalizado, re.IGNORECASE)
+        if match:
+            rut_encontrado = match.group(0).upper()
+            posicion = match.start()
+            
+            # Mostrar contexto donde se encontró
+            inicio_contexto = max(0, posicion - 10)
+            fin_contexto = min(len(text_normalizado), posicion + len(rut_encontrado) + 10)
+            contexto = text_normalizado[inicio_contexto:fin_contexto]
+            
+            print(f"  ✅ RUT: Encontrado con patrón {i+1}: '{rut_encontrado}'")
+            print(f"  📍 RUT: Contexto: '...{contexto}...'")
+            
+            # Si el RUT original tenía , o :, mostrar comparación
+            if tiene_comas or tiene_dos_puntos:
+                contexto_original = text[inicio_contexto:fin_contexto]
+                print(f"  🔄 RUT: Original: '...{contexto_original}...'")
+                print(f"  🔄 RUT: Normalizado: '...{contexto}...'")
+            
+            return rut_encontrado
+        else:
+            print(f"  ❌ RUT: Patrón {i+1} no encontró coincidencias")
+    
+    print(f"  ❌ RUT: No se encontró ningún RUT válido en el texto")
     return ""
 
 def extract_nombre_from_q1(text: str, rut: str) -> str:
