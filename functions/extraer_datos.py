@@ -149,7 +149,7 @@ def process_document_ocr(doc_name: str) -> bool:
         
         # Verificar si ya tiene las columnas de OCR y añadirlas si no existen
         new_columns = []
-        for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre']:
+        for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre', 'ocultar']:
             if col not in fieldnames:
                 new_columns.append(col)
         
@@ -198,6 +198,7 @@ def process_document_ocr(doc_name: str) -> bool:
                 row['rut'] = rut
                 row['fecha'] = fecha
                 row['nombre'] = nombre
+                row['ocultar'] = row.get('ocultar', 'NO')  # Mantener valor existente o NO por defecto
                 
                 if folio:
                     print(f"  ✅ Folio: {folio}")
@@ -222,6 +223,7 @@ def process_document_ocr(doc_name: str) -> bool:
                 # Añadir valores vacíos
                 for col in ['folio', 'q1', 'q2', 'rut', 'fecha', 'nombre']:
                     row[col] = ""
+                row['ocultar'] = row.get('ocultar', 'NO')  # Mantener valor existente
                 
                 # Escribir CSV también para imágenes no encontradas
                 with open(csv_path, 'w', newline='', encoding='utf-8') as f:

@@ -7,7 +7,14 @@ from functions.generate_documentos import process_pdf_to_images_and_csv, get_pdf
 from functions.extraer_datos import process_document_ocr
 import zipfile
 from io import BytesIO
-import fitz  # PyMuPDF
+try:
+    import pymupdf as fitz  # Importación moderna de PyMuPDF
+except ImportError:
+    try:
+        import fitz  # Fallback a la importación tradicional
+    except ImportError:
+        print("❌ PyMuPDF no está instalado")
+        fitz = None
 
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'  # Necesario para flash messages
@@ -97,9 +104,17 @@ def save_data(doc_name, page):
         fieldnames = []
         with open(csv_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
-            fieldnames = reader.fieldnames
+            fieldnames = list(reader.fieldnames)
             rows = list(reader)
-        
+
+        # Verificar si existe la columna 'ocultar' y añadirla si no existe
+        if 'ocultar' not in fieldnames:
+            fieldnames.append('ocultar')
+            # Añadir valor por defecto a todas las filas existentes
+            for row in rows:
+                if 'ocultar' not in row:
+                    row['ocultar'] = 'NO'
+
         if page < 1 or page > len(rows):
             flash('Página inválida', 'error')
             return redirect(url_for('view_document_page', doc_name=doc_name, page=1))
@@ -110,6 +125,7 @@ def save_data(doc_name, page):
         rows[row_index]['rut'] = request.form.get('rut', '').strip()
         rows[row_index]['fecha'] = request.form.get('fecha', '').strip()
         rows[row_index]['nombre'] = request.form.get('nombre', '').strip()
+        rows[row_index]['ocultar'] = request.form.get('ocultar', 'NO').strip()
         
         # Guardar CSV actualizado
         with open(csv_path, 'w', newline='', encoding='utf-8') as f:
@@ -337,6 +353,11 @@ def descargar_documentos(doc_name):
 def separar_pdfs(doc_name):
     """Generar PDFs separados por folio"""
     try:
+        # Verificar que PyMuPDF esté disponible
+        if fitz is None:
+            flash('Error: PyMuPDF no está disponible', 'error')
+            return redirect(url_for('descargar_documentos', doc_name=doc_name))
+        
         # Buscar el PDF original en input/
         pdf_original = None
         if os.path.exists('input'):
@@ -364,18 +385,21 @@ def separar_pdfs(doc_name):
         
         for i, row in enumerate(rows):
             folio = row.get('folio', '').strip()
+            ocultar = row.get('ocultar', 'NO').strip()
             page_num = i + 1
             
-            if folio:
-                if current_group:
-                    folio_groups.append(current_group)
-                
-                current_group = {
-                    'folio': folio,
-                    'pages': [page_num]
-                }
-            elif current_group:
-                current_group['pages'].append(page_num)
+            # Solo procesar páginas que NO están marcadas para ocultar
+            if ocultar != 'SI':
+                if folio:
+                    if current_group:
+                        folio_groups.append(current_group)
+                    
+                    current_group = {
+                        'folio': folio,
+                        'pages': [page_num]
+                    }
+                elif current_group:
+                    current_group['pages'].append(page_num)
         
         if current_group:
             folio_groups.append(current_group)
@@ -384,8 +408,16 @@ def separar_pdfs(doc_name):
         pdfs_folder = os.path.join(doc_folder, 'pdfs_separados')
         os.makedirs(pdfs_folder, exist_ok=True)
         
-        # Abrir PDF original
-        doc_pdf = fitz.open(pdf_original)
+        # Abrir PDF original con manejo de errores
+        try:
+            doc_pdf = fitz.open(pdf_original)
+        except AttributeError:
+            try:
+                doc_pdf = fitz.Document(pdf_original)
+            except AttributeError:
+                flash('Error: No se puede abrir el PDF con PyMuPDF', 'error')
+                return redirect(url_for('descargar_documentos', doc_name=doc_name))
+        
         pdfs_creados = 0
         
         # Generar PDF para cada grupo de folio
@@ -394,7 +426,10 @@ def separar_pdfs(doc_name):
             pages = group['pages']
             
             # Crear nuevo PDF
-            new_pdf = fitz.open()
+            try:
+                new_pdf = fitz.open()
+            except AttributeError:
+                new_pdf = fitz.Document()
             
             for page_num in pages:
                 # PyMuPDF usa índices base 0

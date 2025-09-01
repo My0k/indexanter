@@ -392,6 +392,35 @@
             color: white;
             text-decoration: none;
         }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            border: 2px solid #dc3545;
+            background-color: #fff;
+            color: #dc3545;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.15s ease;
+            min-width: 60px;
+        }
+
+        .toggle-btn.active {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .toggle-btn:hover {
+            background-color: #c82333;
+            border-color: #c82333;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -483,6 +512,16 @@
                                     <div class="form-group">
                                         <label for="nombre">👤 Nombre:</label>
                                         <input type="text" id="nombre" name="nombre" value="{{ current_data.nombre or '' }}" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ocultar">👁️ Ocultar hoja:</label>
+                                        <div class="toggle-container">
+                                            <button type="button" class="toggle-btn {{ 'active' if current_data.ocultar == 'SI' else '' }}" 
+                                                    onclick="toggleOcultar()" id="ocultar-btn">
+                                                <span id="ocultar-text">{{ current_data.ocultar or 'NO' }}</span>
+                                            </button>
+                                            <input type="hidden" id="ocultar" name="ocultar" value="{{ current_data.ocultar or 'NO' }}">
+                                        </div>
                                     </div>
                                     <div class="form-actions">
                                         <button type="submit" class="btn btn-primary">💾 Guardar Cambios</button>
@@ -659,35 +698,59 @@
                 return; // No interferir cuando se está escribiendo
             }
             
-            switch(e.key) {
-                case 'ArrowLeft':
+            switch(e.key.toLowerCase()) {
+                case 'a':
+                case 'arrowleft':
                     e.preventDefault();
-                    document.querySelector('a[href*="page=' + ({{ current_page }} - 1) + '"]')?.click();
+                    {% if current_page and current_page > 1 %}
+                    window.location.href = "{{ url_for('view_document_page', doc_name=current_doc, page=current_page-1) }}";
+                    {% endif %}
                     break;
-                case 'ArrowRight':
+                case 's':
+                case 'arrowright':
                     e.preventDefault();
-                    document.querySelector('a[href*="page=' + ({{ current_page }} + 1) + '"]')?.click();
+                    {% if current_page and current_page < total_pages %}
+                    window.location.href = "{{ url_for('view_document_page', doc_name=current_doc, page=current_page+1) }}";
+                    {% endif %}
                     break;
                 case '+':
                 case '=':
                     e.preventDefault();
-                    zoomIn();
+                    if (typeof zoomIn === 'function') zoomIn();
                     break;
                 case '-':
                     e.preventDefault();
-                    zoomOut();
+                    if (typeof zoomOut === 'function') zoomOut();
                     break;
                 case '0':
                     e.preventDefault();
-                    resetZoom();
+                    if (typeof resetZoom === 'function') resetZoom();
                     break;
                 case 'f':
-                case 'F':
                     e.preventDefault();
-                    fitToWidth();
+                    if (typeof fitToWidth === 'function') fitToWidth();
                     break;
             }
         });
+
+        function toggleOcultar() {
+            const btn = document.getElementById('ocultar-btn');
+            const input = document.getElementById('ocultar');
+            const text = document.getElementById('ocultar-text');
+            
+            if (btn.classList.contains('active')) {
+                btn.classList.remove('active');
+                input.value = 'NO';
+                text.textContent = 'NO';
+            } else {
+                btn.classList.add('active');
+                input.value = 'SI';
+                text.textContent = 'SI';
+            }
+        }
+
+        // Hacer la función global
+        window.toggleOcultar = toggleOcultar;
     </script>
 </body>
 </html>

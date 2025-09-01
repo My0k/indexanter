@@ -77,7 +77,7 @@ def process_pdf_to_images_and_csv(pdf_path, pdf_name):
         
         # Escribir headers si es un archivo nuevo
         if write_header:
-            fieldnames = ['numero_hoja', 'nombre_img', 'path_img']
+            fieldnames = ['numero_hoja', 'nombre_img', 'path_img', 'ocultar']
             print(f"✏️  Escribiendo headers: {', '.join(fieldnames)}")
             csv_writer.writerow(fieldnames)
         
@@ -127,7 +127,7 @@ def process_pdf_to_images_and_csv(pdf_path, pdf_name):
             relative_path = os.path.join('imagenes', image_filename)
             
             # Escribir fila al CSV inmediatamente
-            csv_row = [page_num, image_filename, relative_path]
+            csv_row = [page_num, image_filename, relative_path, 'NO']
             csv_writer.writerow(csv_row)
             print(f"📝 Fila agregada al CSV: Hoja {page_num} -> {image_filename}")
             
