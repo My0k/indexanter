@@ -526,7 +526,7 @@
                                         </select>
                                     </div>
                                     
-                                    <!-- Campo Tipo Documento con mejor lógica de selección -->
+                                    <!-- Campo Tipo Documento con voucher añadido -->
                                     <div class="form-group">
                                         <label for="tipo_documento">📄 Tipo Documento:</label>
                                         <select id="tipo_documento" name="tipo_documento" class="form-control">
@@ -534,6 +534,7 @@
                                             <option value="1" {% if current_data.tipo_documento == '1' %}selected{% endif %}>egreso</option>
                                             <option value="2" {% if current_data.tipo_documento == '2' %}selected{% endif %}>traspaso</option>
                                             <option value="3" {% if current_data.tipo_documento == '3' %}selected{% endif %}>ingreso</option>
+                                            <option value="4" {% if current_data.tipo_documento == '4' %}selected{% endif %}>voucher</option>
                                         </select>
                                     </div>
                                     

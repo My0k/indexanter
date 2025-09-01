@@ -145,7 +145,7 @@ def extract_estado_from_text(text: str) -> str:
 def extract_tipo_documento_from_text(text: str) -> str:
     """
     Extrae tipo de documento del texto completo buscando la primera palabra clave encontrada
-    Devuelve: "1" para egreso, "2" para traspaso, "3" para ingreso, "" si no encuentra nada
+    Devuelve: "1" para egreso, "2" para traspaso, "3" para ingreso, "4" para voucher, "" si no encuentra nada
     """
     if not text:
         print("  🔍 Tipo Doc: Texto vacío - No se puede detectar tipo")
@@ -158,7 +158,8 @@ def extract_tipo_documento_from_text(text: str) -> str:
     palabras_clave = [
         ("EGRESO", "1"),   # egreso = 1
         ("TRASPASO", "2"), # traspaso = 2  
-        ("INGRESO", "3")   # ingreso = 3
+        ("INGRESO", "3"),  # ingreso = 3
+        ("VOUCHER", "4")   # voucher = 4
     ]
     
     # Encontrar la primera palabra que aparece en el texto
@@ -185,7 +186,7 @@ def extract_tipo_documento_from_text(text: str) -> str:
     else:
         print("  ❌ Tipo Doc: RESULTADO FINAL -> No se encontró ningún tipo de documento")
     
-    return tipo_encontrado  # Devuelve "1", "2", "3" o ""
+    return tipo_encontrado  # Devuelve "1", "2", "3", "4" o ""
 
 def process_document_ocr(doc_name: str) -> bool:
     """
