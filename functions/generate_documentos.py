@@ -201,7 +201,7 @@ def check_pdf_dependencies():
 
 def generar_entregable_consolidado():
     """
-    Genera un entregable consolidado con todos los PDFs y un Excel maestro
+    Genera un entregable consolidado manteniendo estructura año/mes/tipo pero consolidando todas las cajas
     
     Returns:
         dict: Resultado del procesamiento
@@ -230,10 +230,6 @@ def generar_entregable_consolidado():
         entregable_folder = os.path.join(base_entregables, f"ENTREGABLE{next_num:02d}")
         os.makedirs(entregable_folder, exist_ok=True)
         
-        # Crear subcarpetas
-        pdfs_folder = os.path.join(entregable_folder, "PDFS")
-        os.makedirs(pdfs_folder, exist_ok=True)
-        
         print(f"📁 Creando entregable: {entregable_folder}")
         
         # Lista para recopilar todos los datos
@@ -260,64 +256,89 @@ def generar_entregable_consolidado():
                     reader = csv.DictReader(f)
                     rows = list(reader)
                 
-                # Copiar PDFs estructurados si existen
-                pdfs_estructurados = os.path.join("pdfs_estructurados", doc_name)
-                if os.path.exists(pdfs_estructurados):
-                    print(f"  📦 Copiando PDFs estructurados de {doc_name}")
-                    for root, dirs, files in os.walk(pdfs_estructurados):
+                # Buscar PDFs en la estructura organizada (pdfs_estructurados)
+                pdfs_estructurados_base = os.path.join("pdfs_estructurados", doc_name)
+                
+                if os.path.exists(pdfs_estructurados_base):
+                    print(f"  📦 Copiando estructura de {pdfs_estructurados_base}")
+                    
+                    # Copiar toda la estructura manteniendo año/mes/tipo pero consolidando
+                    for root, dirs, files in os.walk(pdfs_estructurados_base):
                         for file in files:
                             if file.endswith('.pdf'):
                                 src_path = os.path.join(root, file)
-                                # Crear nombre único para evitar colisiones
-                                relative_path = os.path.relpath(root, pdfs_estructurados)
-                                if relative_path == ".":
-                                    dest_name = f"{doc_name}_{file}"
-                                else:
-                                    # Reemplazar separadores por guiones bajos
-                                    safe_path = relative_path.replace(os.sep, "_").replace("/", "_")
-                                    dest_name = f"{doc_name}_{safe_path}_{file}"
                                 
-                                dest_path = os.path.join(pdfs_folder, dest_name)
-                                shutil.copy2(src_path, dest_path)
-                                pdfs_copiados += 1
+                                # Obtener la ruta relativa desde la base del documento
+                                relative_path = os.path.relpath(root, pdfs_estructurados_base)
+                                
+                                # Crear la misma estructura en el entregable
+                                dest_dir = os.path.join(entregable_folder, relative_path)
+                                os.makedirs(dest_dir, exist_ok=True)
+                                
+                                dest_path = os.path.join(dest_dir, file)
+                                
+                                try:
+                                    shutil.copy2(src_path, dest_path)
+                                    pdfs_copiados += 1
+                                    print(f"  ✅ Copiado: {relative_path}/{file}")
+                                except Exception as e:
+                                    print(f"  ❌ Error copiando {file}: {e}")
                 
-                # Procesar cada fila del CSV
+                # Procesar cada fila del CSV para el Excel consolidado
                 for row in rows:
-                    # Crear registro consolidado
+                    folio = row.get('folio', '').strip()
+                    
+                    # Buscar el PDF correspondiente en la estructura
+                    pdf_path_entregable = ""
+                    pdf_path_original = ""
+                    
+                    if folio:
+                        # Buscar en la estructura copiada
+                        for root, dirs, files in os.walk(entregable_folder):
+                            for file in files:
+                                if file == f"{folio}.pdf":
+                                    # Path relativo desde la carpeta del entregable
+                                    pdf_path_entregable = os.path.relpath(
+                                        os.path.join(root, file), 
+                                        entregable_folder
+                                    ).replace('\\', '/')
+                                    break
+                            if pdf_path_entregable:
+                                break
+                        
+                        # Path original en pdfs_estructurados
+                        pdfs_estructurados_base = os.path.join("pdfs_estructurados", doc_name)
+                        if os.path.exists(pdfs_estructurados_base):
+                            for root, dirs, files in os.walk(pdfs_estructurados_base):
+                                for file in files:
+                                    if file == f"{folio}.pdf":
+                                        pdf_path_original = os.path.join(root, file).replace('\\', '/')
+                                        break
+                                if pdf_path_original:
+                                    break
+                    
+                    # Crear registro consolidado con toda la información
                     registro = {
                         'documento_origen': doc_name,
                         'numero_hoja': row.get('numero_hoja', ''),
                         'nombre_img': row.get('nombre_img', ''),
-                        'path_img_original': row.get('path_img', ''),
+                        'path_img_relativo': row.get('path_img', ''),
                         'path_img_completo': os.path.join('documentos', doc_name, row.get('path_img', '')).replace('\\', '/'),
-                        'folio': row.get('folio', ''),
+                        'folio': folio,
                         'rut': row.get('rut', ''),
                         'fecha': row.get('fecha', ''),
                         'nombre': row.get('nombre', ''),
                         'estado': row.get('estado', ''),
+                        'estado_texto': obtener_estado_texto(row.get('estado', '')),
                         'tipo_documento': row.get('tipo_documento', ''),
                         'tipo_documento_texto': obtener_tipo_documento_texto(row.get('tipo_documento', '')),
                         'nota': row.get('nota', ''),
                         'ocultar': row.get('ocultar', 'NO'),
                         'q1': row.get('q1', ''),
-                        'q2': row.get('q2', '')
+                        'q2': row.get('q2', ''),
+                        'pdf_path_entregable': pdf_path_entregable,
+                        'pdf_path_original': pdf_path_original
                     }
-                    
-                    # Añadir información del PDF correspondiente si tiene folio
-                    folio = row.get('folio', '').strip()
-                    if folio:
-                        # Buscar el PDF correspondiente en los copiados
-                        for pdf_name in os.listdir(pdfs_folder):
-                            if folio in pdf_name and pdf_name.startswith(doc_name):
-                                registro['pdf_entregable'] = pdf_name
-                                registro['path_pdf_entregable'] = os.path.join('PDFS', pdf_name).replace('\\', '/')
-                                break
-                        else:
-                            registro['pdf_entregable'] = ''
-                            registro['path_pdf_entregable'] = ''
-                    else:
-                        registro['pdf_entregable'] = ''
-                        registro['path_pdf_entregable'] = ''
                     
                     consolidado_data.append(registro)
         
@@ -350,6 +371,16 @@ def generar_entregable_consolidado():
         
         # Crear archivo de resumen
         resumen_path = os.path.join(entregable_folder, "RESUMEN.txt")
+        
+        # Analizar estructura creada
+        estructura_info = []
+        for root, dirs, files in os.walk(entregable_folder):
+            if files and any(f.endswith('.pdf') for f in files):
+                pdf_count = len([f for f in files if f.endswith('.pdf')])
+                relative_path = os.path.relpath(root, entregable_folder)
+                if relative_path != ".":
+                    estructura_info.append(f"  {relative_path}: {pdf_count} PDFs")
+        
         with open(resumen_path, 'w', encoding='utf-8') as f:
             f.write(f"ENTREGABLE {next_num:02d}\n")
             f.write(f"Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
@@ -358,9 +389,15 @@ def generar_entregable_consolidado():
             f.write(f"- PDFs copiados: {pdfs_copiados}\n")
             f.write(f"- Registros en Excel: {len(consolidado_data)}\n\n")
             f.write(f"CONTENIDO:\n")
-            f.write(f"- PDFS/: Todos los PDFs generados de todos los documentos\n")
+            f.write(f"- Estructura de carpetas por año/mes/tipo consolidada\n")
             f.write(f"- CONSOLIDADO_ENTREGABLE{next_num:02d}.xlsx: Excel maestro con todos los datos\n")
-            f.write(f"- RESUMEN.txt: Este archivo\n")
+            f.write(f"- RESUMEN.txt: Este archivo\n\n")
+            f.write(f"ESTRUCTURA DE CARPETAS:\n")
+            for info in sorted(estructura_info):
+                f.write(f"{info}\n")
+            f.write(f"\nORIGEN DE PDFs:\n")
+            f.write(f"Los PDFs provienen de pdfs_estructurados/ de todos los documentos,\n")
+            f.write(f"manteniendo la estructura año/mes/tipo pero consolidados en un solo entregable.\n")
         
         resultado = {
             'success': True,
@@ -376,8 +413,9 @@ def generar_entregable_consolidado():
         print(f"\n🎉 ===== ENTREGABLE {next_num:02d} COMPLETADO =====")
         print(f"📁 Carpeta: {entregable_folder}")
         print(f"📊 Excel: {excel_path}")
-        print(f"📄 PDFs: {pdfs_copiados} archivos")
+        print(f"📄 PDFs: {pdfs_copiados} archivos con estructura año/mes/tipo")
         print(f"📋 Registros: {len(consolidado_data)}")
+        print(f"📂 Estructura consolidada de {documentos_procesados} documentos")
         
         return resultado
         
@@ -409,3 +447,20 @@ def obtener_tipo_documento_texto(tipo_num_str):
         return tipos.get(tipo_num, f"Tipo {tipo_num}")
     except (ValueError, TypeError):
         return "Sin tipo"
+
+def obtener_estado_texto(estado_num_str):
+    """Convierte el número de estado a texto descriptivo"""
+    try:
+        if not estado_num_str or estado_num_str.strip() == '':
+            return "Sin estado"
+            
+        estado_num = int(estado_num_str.strip())
+        estados = {
+            1: "Vigente",
+            2: "Pendiente", 
+            3: "Actualizado",
+            4: "Nulo"
+        }
+        return estados.get(estado_num, f"Estado {estado_num}")
+    except (ValueError, TypeError):
+        return "Sin estado"
