@@ -4,12 +4,14 @@ import csv
 from datetime import datetime
 from pdf2image import convert_from_path
 import logging
-from functions.generate_documentos import process_pdf_to_images_and_csv, get_pdf_name_without_extension
+from functions.generate_documentos import process_pdf_to_images_and_csv, get_pdf_name_without_extension, generar_entregable_consolidado
 from functions.extraer_datos import process_document_ocr
 import zipfile
 from io import BytesIO
 import shutil
 from functions.separador_pdf import separar_pdfs_por_estructura
+import pandas as pd
+import glob
 
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'  # Necesario para flash messages
@@ -32,7 +34,54 @@ def index():
     if os.path.exists('documentos'):
         processed_docs = [d for d in os.listdir('documentos') 
                          if os.path.isdir(os.path.join('documentos', d))]
-    return render_template('index.html', processed_docs=processed_docs)
+    
+    # Obtener entregables existentes
+    entregables_existentes = []
+    if os.path.exists('ENTREGABLES'):
+        for folder in os.listdir('ENTREGABLES'):
+            if folder.startswith('ENTREGABLE') and os.path.isdir(os.path.join('ENTREGABLES', folder)):
+                try:
+                    entregable_path = os.path.join('ENTREGABLES', folder)
+                    
+                    # Extraer número
+                    num = int(folder.replace('ENTREGABLE', ''))
+                    
+                    # Obtener fecha de creación
+                    fecha_creacion = datetime.fromtimestamp(os.path.getctime(entregable_path)).strftime('%Y-%m-%d %H:%M')
+                    
+                    # Contar PDFs
+                    pdfs_folder = os.path.join(entregable_path, 'PDFS')
+                    num_pdfs = 0
+                    if os.path.exists(pdfs_folder):
+                        num_pdfs = len([f for f in os.listdir(pdfs_folder) if f.endswith('.pdf')])
+                    
+                    # Leer resumen si existe
+                    resumen_path = os.path.join(entregable_path, 'RESUMEN.txt')
+                    num_registros = 0
+                    if os.path.exists(resumen_path):
+                        with open(resumen_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            import re
+                            match = re.search(r'Registros en Excel: (\d+)', content)
+                            if match:
+                                num_registros = int(match.group(1))
+                    
+                    entregables_existentes.append({
+                        'numero': num,
+                        'nombre': folder,
+                        'fecha_creacion': fecha_creacion,
+                        'num_pdfs': num_pdfs,
+                        'num_registros': num_registros
+                    })
+                except (ValueError, OSError):
+                    continue
+    
+    # Ordenar por número descendente (más reciente primero)
+    entregables_existentes.sort(key=lambda x: x['numero'], reverse=True)
+    
+    return render_template('index.html', 
+                         processed_docs=processed_docs,
+                         entregables_existentes=entregables_existentes)
 
 @app.route('/view_document/<doc_name>')
 def view_document(doc_name):
@@ -569,6 +618,62 @@ def download_all_pdfs(doc_name):
         print(f"❌ Error al crear ZIP estructurado: {str(e)}")
         flash(f'Error al crear ZIP: {str(e)}', 'error')
         return redirect(url_for('descargar_documentos', doc_name=doc_name))
+
+@app.route('/generar_entregable')
+def generar_entregable():
+    """Generar entregable consolidado con todos los documentos"""
+    try:
+        print(f"\n🎯 Iniciando generación de entregable consolidado...")
+        
+        resultado = generar_entregable_consolidado()
+        
+        if resultado['success']:
+            flash(f'Entregable {resultado["entregable_num"]:02d} generado exitosamente: {resultado["pdfs_copiados"]} PDFs, {resultado["registros_excel"]} registros', 'success')
+            flash(f'Carpeta: {resultado["entregable_folder"]}', 'info')
+        else:
+            flash(f'Error al generar entregable: {resultado["error"]}', 'error')
+            
+    except Exception as e:
+        flash(f'Error inesperado: {str(e)}', 'error')
+    
+    return redirect(url_for('index'))
+
+@app.route('/download_entregable/<int:entregable_num>')
+def download_entregable(entregable_num):
+    """Descargar entregable completo como ZIP"""
+    try:
+        entregable_folder = os.path.join("ENTREGABLES", f"ENTREGABLE{entregable_num:02d}")
+        
+        if not os.path.exists(entregable_folder):
+            flash(f'Error: No se encontró el entregable {entregable_num:02d}', 'error')
+            return redirect(url_for('index'))
+        
+        # Crear ZIP en memoria
+        memory_file = BytesIO()
+        
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # Recorrer toda la carpeta del entregable
+            for root, dirs, files in os.walk(entregable_folder):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    # Ruta relativa dentro del ZIP
+                    relative_path = os.path.relpath(file_path, "ENTREGABLES")
+                    zf.write(file_path, relative_path)
+        
+        memory_file.seek(0)
+        
+        zip_filename = f"ENTREGABLE{entregable_num:02d}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        
+        return send_file(
+            memory_file,
+            as_attachment=True,
+            download_name=zip_filename,
+            mimetype='application/zip'
+        )
+        
+    except Exception as e:
+        flash(f'Error al descargar entregable: {str(e)}', 'error')
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)

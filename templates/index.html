@@ -446,175 +446,216 @@
         {% endwith %}
 
         <main>
-            {% if not current_doc %}
-                <!-- Selector de documentos -->
-                <div class="index-content">
-                    <h2>Visor de Imágenes - Indexación</h2>
-                    <p>Selecciona un documento procesado para revisar y editar los datos extraídos.</p>
-                    
-                    <div class="processed-docs">
-                        {% if processed_docs %}
-                            {% for doc in processed_docs %}
-                            <div class="doc-item">
-                                <div class="doc-info">
-                                    <h3>{{ doc }}</h3>
-                                    <p>Documento procesado - Listo para indexación</p>
-                                </div>
-                                <div class="doc-actions">
-                                    <a href="{{ url_for('view_document', doc_name=doc) }}" class="btn btn-primary">
-                                        Ver Documento
-                                    </a>
-                                </div>
+            <div class="container">
+                <h1>📋 Sistema de Indexación de Documentos</h1>
+                
+                <!-- Botón para generar entregable -->
+                <div class="mb-4">
+                    <a href="{{ url_for('generar_entregable') }}" class="btn btn-primary btn-lg">
+                        �� Generar Entregable
+                    </a>
+                    <small class="text-muted d-block mt-1">
+                        Consolida todos los documentos procesados en un entregable único
+                    </small>
+                </div>
+
+                <!-- Lista de entregables existentes -->
+                {% if entregables_existentes %}
+                <div class="mb-4">
+                    <h3>📦 Entregables Generados</h3>
+                    <div class="list-group">
+                        {% for entregable in entregables_existentes %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ entregable.nombre }}</strong>
+                                <small class="text-muted d-block">
+                                    Creado: {{ entregable.fecha_creacion }} | 
+                                    PDFs: {{ entregable.num_pdfs }} | 
+                                    Registros: {{ entregable.num_registros }}
+                                </small>
                             </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="no-docs">
-                                <p>No hay documentos procesados disponibles</p>
-                                <p>Primero procesa algunos PDFs en la sección <a href="{{ url_for('documents') }}">Documentos</a>.</p>
+                            <div>
+                                <a href="{{ url_for('download_entregable', entregable_num=entregable.numero) }}" 
+                                   class="btn btn-success btn-sm">
+                                    ⬇️ Descargar ZIP
+                                </a>
                             </div>
-                        {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
-            {% else %}
-                <!-- Visor de documento -->
-                <div class="document-viewer">
-                    <div class="document-header">
-                        <h2>📄 {{ current_doc }}</h2>
-                        <div class="header-actions">
-                            <a href="{{ url_for('download_csv', doc_name=current_doc) }}" class="btn btn-download">
-                                📥 Descargar Cuadratura
-                            </a>
-                            <a href="{{ url_for('descargar_documentos', doc_name=current_doc) }}" class="btn btn-pdf">
-                                📄 Descargar PDFs
-                            </a>
-                            <a href="{{ url_for('index') }}" class="btn btn-secondary">← Volver al inicio</a>
+                {% endif %}
+
+                {% if not current_doc %}
+                    <!-- Selector de documentos -->
+                    <div class="index-content">
+                        <h2>Visor de Imágenes - Indexación</h2>
+                        <p>Selecciona un documento procesado para revisar y editar los datos extraídos.</p>
+                        
+                        <div class="processed-docs">
+                            {% if processed_docs %}
+                                {% for doc in processed_docs %}
+                                <div class="doc-item">
+                                    <div class="doc-info">
+                                        <h3>{{ doc }}</h3>
+                                        <p>Documento procesado - Listo para indexación</p>
+                                    </div>
+                                    <div class="doc-actions">
+                                        <a href="{{ url_for('view_document', doc_name=doc) }}" class="btn btn-primary">
+                                            Ver Documento
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="no-docs">
+                                    <p>No hay documentos procesados disponibles</p>
+                                    <p>Primero procesa algunos PDFs en la sección <a href="{{ url_for('documents') }}">Documentos</a>.</p>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
-                    
-                    <div class="viewer-content">
-                        <!-- Panel izquierdo: Datos editables y OCR -->
-                        <div class="left-panel">
-                            <div class="data-section">
-                                <h3>✏️ Datos Editables</h3>
-                                <form method="POST" action="{{ url_for('save_data', doc_name=current_doc, page=current_page) }}" class="compact-form">
-                                    <div class="form-group">
-                                        <label for="folio">📋 Folio:</label>
-                                        <input type="text" id="folio" name="folio" value="{{ current_data.folio or '' }}" class="form-control">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="rut">🆔 RUT:</label>
-                                        <input type="text" id="rut" name="rut" value="{{ current_data.rut or '' }}" class="form-control">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="fecha">📅 Fecha:</label>
-                                        <input type="text" id="fecha" name="fecha" value="{{ current_data.fecha or '' }}" class="form-control">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="nombre">👤 Nombre:</label>
-                                        <input type="text" id="nombre" name="nombre" value="{{ current_data.nombre or '' }}" class="form-control">
-                                    </div>
-                                    
-                                    <!-- Campo Estado -->
-                                    <div class="form-group">
-                                        <label for="estado">📊 Estado:</label>
-                                        <select id="estado" name="estado" class="form-control">
-                                            <option value="" {{ 'selected' if not current_data.estado or current_data.estado == '' else '' }}>-- Seleccionar Estado --</option>
-                                            <option value="1" {{ 'selected' if current_data.estado == '1' else '' }}>VIGENTE</option>
-                                            <option value="2" {{ 'selected' if current_data.estado == '2' else '' }}>PENDIENTE</option>
-                                            <option value="3" {{ 'selected' if current_data.estado == '3' else '' }}>ACTUALIZADO</option>
-                                            <option value="4" {{ 'selected' if current_data.estado == '4' else '' }}>NULO</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Campo Tipo Documento con voucher añadido -->
-                                    <div class="form-group">
-                                        <label for="tipo_documento">📄 Tipo Documento:</label>
-                                        <select id="tipo_documento" name="tipo_documento" class="form-control">
-                                            <option value="" {% if not current_data.tipo_documento or current_data.tipo_documento == '' %}selected{% endif %}>-- Seleccionar Tipo --</option>
-                                            <option value="1" {% if current_data.tipo_documento == '1' %}selected{% endif %}>egreso</option>
-                                            <option value="2" {% if current_data.tipo_documento == '2' %}selected{% endif %}>traspaso</option>
-                                            <option value="3" {% if current_data.tipo_documento == '3' %}selected{% endif %}>ingreso</option>
-                                            <option value="4" {% if current_data.tipo_documento == '4' %}selected{% endif %}>voucher</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- NUEVO Campo Nota -->
-                                    <div class="form-group">
-                                        <label for="nota">📝 Nota:</label>
-                                        <textarea id="nota" name="nota" class="form-control" rows="3" placeholder="Agregar nota opcional...">{{ current_data.nota or '' }}</textarea>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="ocultar">👁️ Ocultar hoja:</label>
-                                        <div class="toggle-container">
-                                            <button type="button" class="toggle-btn {{ 'active' if current_data.ocultar == 'SI' else '' }}" 
-                                                    onclick="toggleOcultar()" id="ocultar-btn">
-                                                <span id="ocultar-text">{{ current_data.ocultar or 'NO' }}</span>
-                                            </button>
-                                            <input type="hidden" id="ocultar" name="ocultar" value="{{ current_data.ocultar or 'NO' }}">
-                                        </div>
-                                    </div>
-                                    <div class="form-actions">
-                                        <button type="submit" class="btn btn-primary">💾 Guardar Cambios</button>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <div class="ocr-section">
-                                <h4>🔍 Datos OCR (Solo lectura)</h4>
-                                <div class="form-group">
-                                    <label>Q1 (Cuadrante 1):</label>
-                                    <textarea readonly class="form-control readonly">{{ current_data.q1 or '' }}</textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label>Q2 (Cuadrante 2):</label>
-                                    <textarea readonly class="form-control readonly">{{ current_data.q2 or '' }}</textarea>
-                                </div>
+                {% else %}
+                    <!-- Visor de documento -->
+                    <div class="document-viewer">
+                        <div class="document-header">
+                            <h2>📄 {{ current_doc }}</h2>
+                            <div class="header-actions">
+                                <a href="{{ url_for('download_csv', doc_name=current_doc) }}" class="btn btn-download">
+                                    📥 Descargar Cuadratura
+                                </a>
+                                <a href="{{ url_for('descargar_documentos', doc_name=current_doc) }}" class="btn btn-pdf">
+                                    📄 Descargar PDFs
+                                </a>
+                                <a href="{{ url_for('index') }}" class="btn btn-secondary">← Volver al inicio</a>
                             </div>
                         </div>
+                        
+                        <div class="viewer-content">
+                            <!-- Panel izquierdo: Datos editables y OCR -->
+                            <div class="left-panel">
+                                <div class="data-section">
+                                    <h3>✏️ Datos Editables</h3>
+                                    <form method="POST" action="{{ url_for('save_data', doc_name=current_doc, page=current_page) }}" class="compact-form">
+                                        <div class="form-group">
+                                            <label for="folio">📋 Folio:</label>
+                                            <input type="text" id="folio" name="folio" value="{{ current_data.folio or '' }}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="rut">🆔 RUT:</label>
+                                            <input type="text" id="rut" name="rut" value="{{ current_data.rut or '' }}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="fecha">📅 Fecha:</label>
+                                            <input type="text" id="fecha" name="fecha" value="{{ current_data.fecha or '' }}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="nombre">👤 Nombre:</label>
+                                            <input type="text" id="nombre" name="nombre" value="{{ current_data.nombre or '' }}" class="form-control">
+                                        </div>
+                                        
+                                        <!-- Campo Estado -->
+                                        <div class="form-group">
+                                            <label for="estado">📊 Estado:</label>
+                                            <select id="estado" name="estado" class="form-control">
+                                                <option value="" {{ 'selected' if not current_data.estado or current_data.estado == '' else '' }}>-- Seleccionar Estado --</option>
+                                                <option value="1" {{ 'selected' if current_data.estado == '1' else '' }}>VIGENTE</option>
+                                                <option value="2" {{ 'selected' if current_data.estado == '2' else '' }}>PENDIENTE</option>
+                                                <option value="3" {{ 'selected' if current_data.estado == '3' else '' }}>ACTUALIZADO</option>
+                                                <option value="4" {{ 'selected' if current_data.estado == '4' else '' }}>NULO</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Campo Tipo Documento con voucher añadido -->
+                                        <div class="form-group">
+                                            <label for="tipo_documento">📄 Tipo Documento:</label>
+                                            <select id="tipo_documento" name="tipo_documento" class="form-control">
+                                                <option value="" {% if not current_data.tipo_documento or current_data.tipo_documento == '' %}selected{% endif %}>-- Seleccionar Tipo --</option>
+                                                <option value="1" {% if current_data.tipo_documento == '1' %}selected{% endif %}>egreso</option>
+                                                <option value="2" {% if current_data.tipo_documento == '2' %}selected{% endif %}>traspaso</option>
+                                                <option value="3" {% if current_data.tipo_documento == '3' %}selected{% endif %}>ingreso</option>
+                                                <option value="4" {% if current_data.tipo_documento == '4' %}selected{% endif %}>voucher</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- NUEVO Campo Nota -->
+                                        <div class="form-group">
+                                            <label for="nota">📝 Nota:</label>
+                                            <textarea id="nota" name="nota" class="form-control" rows="3" placeholder="Agregar nota opcional...">{{ current_data.nota or '' }}</textarea>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="ocultar">👁️ Ocultar hoja:</label>
+                                            <div class="toggle-container">
+                                                <button type="button" class="toggle-btn {{ 'active' if current_data.ocultar == 'SI' else '' }}" 
+                                                        onclick="toggleOcultar()" id="ocultar-btn">
+                                                    <span id="ocultar-text">{{ current_data.ocultar or 'NO' }}</span>
+                                                </button>
+                                                <input type="hidden" id="ocultar" name="ocultar" value="{{ current_data.ocultar or 'NO' }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn btn-primary">💾 Guardar Cambios</button>
+                                        </div>
+                                    </form>
+                                </div>
 
-                        <!-- Panel derecho: Imagen con controles -->
-                        <div class="image-section">
-                            <div class="image-controls">
-                                <div class="nav-controls">
-                                    {% if current_page > 1 %}
-                                        <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page-1) }}" class="small-btn">← Anterior</a>
-                                    {% else %}
-                                        <button class="small-btn" disabled>← Anterior</button>
-                                    {% endif %}
+                                <div class="ocr-section">
+                                    <h4>🔍 Datos OCR (Solo lectura)</h4>
+                                    <div class="form-group">
+                                        <label>Q1 (Cuadrante 1):</label>
+                                        <textarea readonly class="form-control readonly">{{ current_data.q1 or '' }}</textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Q2 (Cuadrante 2):</label>
+                                        <textarea readonly class="form-control readonly">{{ current_data.q2 or '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Panel derecho: Imagen con controles -->
+                            <div class="image-section">
+                                <div class="image-controls">
+                                    <div class="nav-controls">
+                                        {% if current_page > 1 %}
+                                            <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page-1) }}" class="small-btn">← Anterior</a>
+                                        {% else %}
+                                            <button class="small-btn" disabled>← Anterior</button>
+                                        {% endif %}
+                                        
+                                        <span class="page-info">{{ current_page }}/{{ total_pages }}</span>
+                                        
+                                        {% if current_page < total_pages %}
+                                            <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page+1) }}" class="small-btn">Siguiente →</a>
+                                        {% else %}
+                                            <button class="small-btn" disabled>Siguiente →</button>
+                                        {% endif %}
+                                    </div>
                                     
-                                    <span class="page-info">{{ current_page }}/{{ total_pages }}</span>
-                                    
-                                    {% if current_page < total_pages %}
-                                        <a href="{{ url_for('view_document_page', doc_name=current_doc, page=current_page+1) }}" class="small-btn">Siguiente →</a>
-                                    {% else %}
-                                        <button class="small-btn" disabled>Siguiente →</button>
-                                    {% endif %}
+                                    <div class="zoom-controls">
+                                        <button class="zoom-btn" onclick="zoomOut()">−</button>
+                                        <span class="zoom-info" id="zoom-info">100%</span>
+                                        <button class="zoom-btn" onclick="zoomIn()">+</button>
+                                        <button class="zoom-btn" onclick="resetZoom()">↻</button>
+                                        <button class="zoom-btn" onclick="fitToWidth()">📐</button>
+                                    </div>
                                 </div>
                                 
-                                <div class="zoom-controls">
-                                    <button class="zoom-btn" onclick="zoomOut()">−</button>
-                                    <span class="zoom-info" id="zoom-info">100%</span>
-                                    <button class="zoom-btn" onclick="zoomIn()">+</button>
-                                    <button class="zoom-btn" onclick="resetZoom()">↻</button>
-                                    <button class="zoom-btn" onclick="fitToWidth()">📐</button>
+                                <div class="image-container" id="image-container">
+                                    {% if img_exists %}
+                                        <img src="{{ url_for('serve_image', doc_name=current_doc, filename=current_data.path_img) }}" 
+                                             alt="Página {{ current_page }}" class="document-image" id="document-image">
+                                    {% else %}
+                                        <div class="image-placeholder">
+                                            <p>❌ Imagen no encontrada: {{ current_data.nombre_img }}</p>
+                                        </div>
+                                    {% endif %}
                                 </div>
-                            </div>
-                            
-                            <div class="image-container" id="image-container">
-                                {% if img_exists %}
-                                    <img src="{{ url_for('serve_image', doc_name=current_doc, filename=current_data.path_img) }}" 
-                                         alt="Página {{ current_page }}" class="document-image" id="document-image">
-                                {% else %}
-                                    <div class="image-placeholder">
-                                        <p>❌ Imagen no encontrada: {{ current_data.nombre_img }}</p>
-                                    </div>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
-                </div>
-            {% endif %}
+                {% endif %}
+            </div>
         </main>
     </div>
 
