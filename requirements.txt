@@ -49,3 +49,6 @@ frontend==0.0.3
 tools==1.0.5
 pandas
 openpyxl
+opencv-python-headless
+openai
+configparser

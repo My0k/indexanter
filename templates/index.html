@@ -465,21 +465,31 @@
                     <h3>📦 Entregables Generados</h3>
                     <div class="list-group">
                         {% for entregable in entregables_existentes %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ entregable.nombre }}</strong>
-                                <small class="text-muted d-block">
-                                    Creado: {{ entregable.fecha_creacion }} | 
-                                    PDFs: {{ entregable.num_pdfs }} | 
-                                    Registros: {{ entregable.num_registros }}
-                                </small>
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>{{ entregable.nombre }}</strong>
+                                    <small class="text-muted d-block">
+                                        Creado: {{ entregable.fecha_creacion }} | 
+                                        PDFs: {{ entregable.num_pdfs }} | 
+                                        Registros: {{ entregable.num_registros }}
+                                    </small>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('download_entregable', entregable_num=entregable.numero) }}" 
+                                       class="btn btn-success btn-sm me-2">
+                                        ⬇️ Descargar ZIP
+                                    </a>
+                                    <a href="{{ url_for('procesar_ia', entregable_num=entregable.numero) }}" 
+                                       class="btn btn-warning btn-sm"
+                                       onclick="return confirm('¿Procesar este entregable con IA para extraer RUTs y nombres? Esto puede tomar varios minutos.')">
+                                        🤖 Procesar con IA
+                                    </a>
+                                </div>
                             </div>
-                            <div>
-                                <a href="{{ url_for('download_entregable', entregable_num=entregable.numero) }}" 
-                                   class="btn btn-success btn-sm">
-                                    ⬇️ Descargar ZIP
-                                </a>
-                            </div>
+                            <small class="text-info">
+                                💡 El procesamiento con IA extraerá RUTs y nombres de las imágenes de comprobantes usando OpenAI Vision API
+                            </small>
                         </div>
                         {% endfor %}
                     </div>

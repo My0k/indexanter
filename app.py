@@ -12,6 +12,7 @@ import shutil
 from functions.separador_pdf import separar_pdfs_por_estructura
 import pandas as pd
 import glob
+from functions.get_rut_ai import procesar_entregable_con_ai
 
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'  # Necesario para flash messages
@@ -674,6 +675,26 @@ def download_entregable(entregable_num):
     except Exception as e:
         flash(f'Error al descargar entregable: {str(e)}', 'error')
         return redirect(url_for('index'))
+
+@app.route('/procesar_ia/<int:entregable_num>')
+def procesar_ia(entregable_num):
+    """Procesar entregable con IA para extraer RUTs y nombres"""
+    try:
+        print(f"\n🤖 Iniciando procesamiento con IA para entregable {entregable_num}")
+        
+        resultado = procesar_entregable_con_ai(entregable_num)
+        
+        if resultado['success']:
+            flash(f'Procesamiento con IA completado: {resultado["comprobantes_procesados"]} comprobantes procesados', 'success')
+            if resultado['errores'] > 0:
+                flash(f'Advertencia: {resultado["errores"]} errores durante el procesamiento', 'warning')
+        else:
+            flash(f'Error en procesamiento con IA: {resultado["error"]}', 'error')
+            
+    except Exception as e:
+        flash(f'Error inesperado: {str(e)}', 'error')
+    
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
